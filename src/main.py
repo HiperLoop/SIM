@@ -55,9 +55,12 @@ def get_average_quantities(agg_m: float, agg_E: float, agg_E2: float, iterations
 
 def simulation(random_seed: int, down_probability: float, iterations: int):
     if random_seed != 0: np.random.seed(random_seed)
-    agg_m = 0, agg_E = 0, agg_E2 = 0
+    agg_m = 0
+    agg_E = 0
+    agg_E2 = 0
     spin_matrix: np.ndarray = generate_initial_spin_orientations(down_probability)
-    for _ in range(iterations):
+    for i in range(iterations):
+        if i % 100 == 0: print(f'Iteration {i}/{iterations}')
         metropolis_algorithm_step(spin_matrix)
         agg_m, agg_E, agg_E2 = update_aggregate_quantities(spin_matrix, agg_m, agg_E, agg_E2)
 
@@ -65,8 +68,11 @@ def simulation(random_seed: int, down_probability: float, iterations: int):
 
 def meta_simulation(simulation_count: int, down_probability: float, iterations: int, simulation_seeds: np.ndarray = None):
     if not simulation_seeds: simulation_seeds = np.zeros(simulation_count)
-    agg_m = 0, agg_E = 0, agg_C = 0
+    agg_m = 0
+    agg_E = 0
+    agg_C = 0
     for i in range(simulation_count):
+        print(f'Simulation {i}/{simulation_count}')
         m, E, C = simulation(simulation_seeds[i], down_probability, iterations)
         agg_m += m
         agg_E += E
@@ -74,7 +80,7 @@ def meta_simulation(simulation_count: int, down_probability: float, iterations: 
     return agg_m/simulation_count, agg_E/simulation_count, agg_C/simulation_count
 
 def main():
-    simulation(1, 0.5, 10)
+    print(meta_simulation(5, 0.5, 10000))
 
 if __name__=="__main__":
     main()
