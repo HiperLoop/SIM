@@ -54,7 +54,7 @@ def get_average_quantities(agg_m: float, agg_E: float, agg_E2: float, iterations
     return avg_m, avg_E / N, heat_capacity
 
 def simulation(random_seed: int, down_probability: float, iterations: int):
-    if random_seed != 0: np.random.seed(random_seed)
+    if random_seed == 0: np.random.seed(random_seed)
     agg_m = 0, agg_E = 0, agg_E2 = 0
     spin_matrix: np.ndarray = generate_initial_spin_orientations(down_probability)
     for _ in range(iterations):
@@ -72,7 +72,6 @@ def meta_simulation(simulation_count: int, down_probability: float, iterations: 
         agg_E += E
         agg_C += C
     return agg_m/simulation_count, agg_E/simulation_count, agg_C/simulation_count
-        
 
 def main():
     simulation(1, 0.5, 10)
