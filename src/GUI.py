@@ -13,29 +13,29 @@ import os
 rng = np.random.default_rng()
 
 # --- Single Simulation Global Variables ---
-T_red: float = 1                    # Reduced temperature
-n: int = 20                         # Sqrt of number of spins
-N: int = n*n                        # Number of spins
-down_probability = 0.5
+T_red: float = 1                            # Reduced temperature
+n: int = 20                                 # Sqrt of number of spins
+N: int = n*n                                # Number of spins
+down_probability = 0.5                      # Probability of a spin to be in the down state at initialisation
 
-update_sleep: float = 0.01          # Update sleep duration in seconds
-sweep_steps: int = N                # Steps per sweep (defaults to N)
-burn_in_iteration_count: int = 0    # Number of iterations before average values are collected
+update_sleep: float = 0.01                  # Update sleep duration in seconds
+sweep_steps: int = N                        # Steps per sweep (defaults to N)
+burn_in_iteration_count: int = 0            # Number of iterations before average values are collected
 
-iteration_count = 0
+iteration_count = 0                         # Number of sweeps performed
 
 # --- Multi Simulation Global Variables ---
-multi_T_red: float = 1
-multi_n: int = 20
-multi_N: int = multi_n * multi_n
-multi_down_probability = 0.5
+multi_T_red: float = 1                      # Reduced temperature
+multi_n: int = 20                           # Sqrt of number of spins
+multi_N: int = multi_n * multi_n            # Number of spins
+multi_down_probability = 0.5                # Probability of a spin to be in the down state at initialisation
 
-multi_update_sleep: float = 0.01
-multi_sweep_steps: int = multi_N
-multi_burn_in_iteration_count: int = 0
+multi_update_sleep: float = 0.01            # Update sleep duration in seconds
+multi_sweep_steps: int = multi_N            # Steps per sweep (defaults to N)
+multi_burn_in_iteration_count: int = 2500   # Number of sweeps before average values are collected
 
-steps_per_simulation: int = 1000
-simulation_count = 0
+steps_per_simulation: int = 10000           # Number of sweeps per simulation
+simulation_count = 0                        # Number of simulations performed
 
 def generate_initial_spin_orientations(down_probability: float, n: int, local_rng=None):
     if local_rng is None:
