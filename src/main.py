@@ -53,7 +53,7 @@ def get_average_quantities(agg_m: float, agg_E: float, agg_E2: float, iterations
 
     return avg_m, avg_E / N, heat_capacity
 
-def simulation(random_seed: int, down_probability: float, iterations: int):
+def simulation(random_seed: int, down_probability: float, iterations: int, burn_in_iterations):
     if random_seed != 0: np.random.seed(random_seed)
     agg_m = 0
     agg_E = 0
@@ -62,18 +62,19 @@ def simulation(random_seed: int, down_probability: float, iterations: int):
     for i in range(iterations):
         if i % 100 == 0: print(f'Iteration {i}/{iterations}')
         metropolis_algorithm_step(spin_matrix)
-        agg_m, agg_E, agg_E2 = update_aggregate_quantities(spin_matrix, agg_m, agg_E, agg_E2)
+        if i > burn_in_iterations:
+            agg_m, agg_E, agg_E2 = update_aggregate_quantities(spin_matrix, agg_m, agg_E, agg_E2)
 
-    return get_average_quantities(agg_m, agg_E, agg_E2, iterations)
+    return get_average_quantities(agg_m, agg_E, agg_E2, iterations - burn_in_iterations)
 
-def meta_simulation(simulation_count: int, down_probability: float, iterations: int, simulation_seeds: np.ndarray = None):
+def meta_simulation(simulation_count: int, down_probability: float, iterations: int, burn_in_iterations: int, simulation_seeds: np.ndarray = None):
     if not simulation_seeds: simulation_seeds = np.zeros(simulation_count)
     agg_m = 0
     agg_E = 0
     agg_C = 0
     for i in range(simulation_count):
         print(f'Simulation {i}/{simulation_count}')
-        m, E, C = simulation(simulation_seeds[i], down_probability, iterations)
+        m, E, C = simulation(simulation_seeds[i], down_probability, iterations, burn_in_iterations)
         agg_m += m
         agg_E += E
         agg_C += C
