@@ -3,9 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 rng = np.random.default_rng()
 
-T_red = 1 #Reduced temperature
-n:int = 20 #Sqrt of number of spins
-N:int = n*n #Number of spins
+T_red = 1   # Reduced temperature
+n:int = 20  # Sqrt of number of spins
+N:int = n*n # Number of spins
 
 def show_spins(spin_matrix: np.ndarray):
     plt.imshow(spin_matrix)
@@ -23,7 +23,7 @@ def get_reduced_energy_difference_at_position(position: int[2], spin_matrix: np.
     return 2 * spin_matrix[x][y] * nearest_neighbour_sum
 
 def metropolis_algorithm_step(spin_matrix: np.ndarray):
-    random_position: int[2] = rng.integers(0, n, size = 2)
+    random_position: np.ndarray = rng.integers(0, n, size = 2)
     flip_energy = get_reduced_energy_difference_at_position(random_position, spin_matrix)
     if flip_energy <= 0 or rng.random() < np.exp(-flip_energy / T_red):
         spin_matrix[random_position[0]][random_position[1]]*=-1
