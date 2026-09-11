@@ -16,6 +16,8 @@ DATA_PATH: str = "./data/"
 rng = np.random.default_rng()
 
 # --- Single Simulation Global Variables ---
+RNG_seed: int = 0                           # Randomness seed
+
 T_red: float = 1                            # Reduced temperature
 n: int = 20                                 # Sqrt of number of spins
 N: int = n*n                                # Number of spins
@@ -28,6 +30,8 @@ burn_in_iteration_count: int = 0            # Number of iterations before averag
 iteration_count = 0                         # Number of sweeps performed
 
 # --- Multi Simulation Global Variables ---
+multi_RNG_seed: int = 0                     # Randomness seed
+
 multi_T_red: float = 1                      # Reduced temperature
 multi_n: int = 20                           # Sqrt of number of spins
 multi_N: int = multi_n * multi_n            # Number of spins
@@ -148,9 +152,9 @@ matplotlib.use('TkAgg')
 
 def reset_single_simulation():
     '''Reset all variables relevant to single simualtion tab.'''
-    global spin_matrix, iteration_count, single_sim_agg_m, single_sim_agg_E, single_sim_agg_E2, single_sim_heat_capacity
+    global spin_matrix, iteration_count, single_sim_agg_m, single_sim_agg_E, single_sim_agg_E2, single_sim_heat_capacity, RNG_seed
     global iterations_history, m_history, E_history, C_history
-    spin_matrix = generate_initial_spin_orientations(down_probability, n)
+    spin_matrix = generate_initial_spin_orientations(down_probability, n, np.random.default_rng(RNG_seed if RNG_seed != 0 else None))
     iteration_count = 0
     single_sim_agg_m = 0
     single_sim_agg_E = 0
@@ -161,7 +165,7 @@ def reset_single_simulation():
     E_history.clear()
     C_history.clear()
 
-def acquisition_thread(window, stop_event):
+def acquisition_thread(window, stop_event, local_rng):
     """Generate/acquire data continuously in the background."""
 
     global iteration_count, single_sim_agg_m, single_sim_agg_E, single_sim_agg_E2, single_sim_heat_capacity
@@ -169,7 +173,7 @@ def acquisition_thread(window, stop_event):
     while not stop_event.is_set():
         '''Perform simulation()'''
         for _ in range(sweep_steps):
-            metropolis_algorithm_step(spin_matrix, T_red, n)
+            metropolis_algorithm_step(spin_matrix, T_red, n, local_rng)
         iteration_count += 1
         current_single_sim_mag, current_single_sim_E, _ = get_iteration_quantities(spin_matrix)
         if iteration_count > burn_in_iteration_count:
@@ -213,7 +217,7 @@ def reset_multi_simulation():
     multi_E_history.clear()
     multi_C_history.clear()
 
-def multi_acquisition_thread(window, stop_event):
+def multi_acquisition_thread(window, stop_event, local_rng):
     """Generate/acquire data continuously in the background using multi-core processing."""
 
     global simulation_count, multi_sim_agg_m, multi_sim_agg_E, multi_sim_agg_C
@@ -230,7 +234,7 @@ def multi_acquisition_thread(window, stop_event):
 
             # Generate CPU tasks for each simualtion
             tasks = [
-                (0, multi_down_probability, steps_per_simulation, multi_burn_in_iteration_count, multi_T_red, multi_n, multi_sweep_steps)
+                (local_rng.integers(1000000), multi_down_probability, steps_per_simulation, multi_burn_in_iteration_count, multi_T_red, multi_n, multi_sweep_steps)
                 for _ in range(num_cores)
             ]
 
@@ -377,7 +381,10 @@ single_simulation_tab_layout = [
         sg.Input(str(down_probability), key='-DOWN-', size=(10, 1)),
 
         sg.Text('Equilibraiton sweep count:', size=(19, 1)),
-        sg.Input(str(burn_in_iteration_count), key='-BURNIN-', size=(10, 1))
+        sg.Input(str(burn_in_iteration_count), key='-BURNIN-', size=(10, 1)),
+
+        sg.Text('Randomness seed:', size=(19, 1)),
+        sg.Input(str(RNG_seed), key='-RNG-SEED-', size=(10, 1))
     ],
 
     # Row 3
@@ -426,7 +433,10 @@ multi_simulation_tab_layout = [
         sg.Input(str(multi_down_probability), key='-MULTI-DOWN-', size=(10, 1)),
 
         sg.Text('Equilibration sweep count:', size=(19, 1)),
-        sg.Input(str(multi_burn_in_iteration_count), key='-MULTI-BURNIN-', size=(10, 1))
+        sg.Input(str(multi_burn_in_iteration_count), key='-MULTI-BURNIN-', size=(10, 1)),
+
+        sg.Text('Randomness seed:', size=(19, 1)),
+        sg.Input(str(multi_RNG_seed), key='-MULTI-RNG-SEED-', size=(10, 1))
     ],
 
     # Row 3
@@ -523,6 +533,7 @@ if __name__ == '__main__':
                 update_sleep = float(values['-SLEEP-'])
                 sweep_steps = int(values['-STEPS-'])
                 burn_in_iteration_count = int(values['-BURNIN-'])
+                RNG_seed = int(values['-RNG-SEED-'])
 
                 if T_red <= 0:
                     raise ValueError("T must be greater than 0")
@@ -568,9 +579,11 @@ if __name__ == '__main__':
                 reset_single_simulation()
                 stop_event.clear()
 
+                random_seed = np.random.default_rng(RNG_seed if RNG_seed != 0 else None)
+
                 worker = threading.Thread(
                     target=acquisition_thread,
-                    args=(window, stop_event),
+                    args=(window, stop_event, random_seed),
                     daemon=True
                 )
 
@@ -606,6 +619,7 @@ if __name__ == '__main__':
                 update_sleep = float(values['-SLEEP-'])
                 sweep_steps = int(values['-STEPS-'])
                 burn_in_iteration_count = int(values['-BURNIN-'])
+                RNG_seed = int(values['-RNG-SEED-'])
 
                 if T_red <= 0:
                     raise ValueError("T must be greater than 0")
@@ -669,6 +683,7 @@ if __name__ == '__main__':
                 multi_sweep_steps = int(values['-MULTI-STEPS-'])
                 multi_burn_in_iteration_count = int(values['-MULTI-BURNIN-'])
                 steps_per_simulation = int(values['-MULTI-STEPS-PER-SIM-'])
+                multi_RNG_seed = int(values['-MULTI-RNG-SEED-'])
 
                 if multi_T_red <= 0:
                     raise ValueError("T must be greater than 0")
@@ -708,9 +723,11 @@ if __name__ == '__main__':
                 reset_multi_simulation()
                 multi_stop_event.clear()
 
+                random_seed = np.random.default_rng(multi_RNG_seed if multi_RNG_seed != 0 else None)
+
                 multi_worker = threading.Thread(
                     target=multi_acquisition_thread,
-                    args=(window, multi_stop_event),
+                    args=(window, multi_stop_event, random_seed),
                     daemon=True
                 )
 
@@ -744,6 +761,7 @@ if __name__ == '__main__':
                 multi_sweep_steps = int(values['-MULTI-STEPS-'])
                 multi_burn_in_iteration_count = int(values['-MULTI-BURNIN-'])
                 steps_per_simulation = int(values['-MULTI-STEPS-PER-SIM-'])
+                multi_RNG_seed = int(values['-MULTI-RNG-SEED-'])
 
                 if multi_T_red <= 0:
                     raise ValueError("T must be greater than 0")
