@@ -581,6 +581,7 @@ if __name__ == '__main__':
 
             stop_event.set()
 
+        # SAVE button funtionality in single simualtion tab
         elif event == '-SAVE-':
 
             now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -720,6 +721,7 @@ if __name__ == '__main__':
 
             multi_stop_event.set()
 
+        # SAVE button funtionality in multi-simualtion tab
         elif event == '-MULTI-SAVE-':
 
             now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
