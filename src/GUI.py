@@ -4,11 +4,14 @@ import PySimpleGUI as sg
 import matplotlib
 import threading
 import time
+import datetime
 import numpy as np
 import scipy.constants as const
 import matplotlib.pyplot as plt
 from concurrent.futures import ProcessPoolExecutor
 import os
+
+DATA_PATH: str = "./data/"
 
 rng = np.random.default_rng()
 
@@ -358,28 +361,28 @@ def create_multi_figure(canvas):
 single_simulation_tab_layout = [
     # Row 1
     [
-        sg.Text('Reduced T:', size=(18, 1)),
+        sg.Text('Reduced T:', size=(19, 1)),
         sg.Input(str(T_red), key='-T-', size=(10, 1)),
 
-        sg.Text('Steps per sweep:', size=(18, 1)),
+        sg.Text('Steps per sweep:', size=(19, 1)),
         sg.Input(str(sweep_steps), key='-STEPS-', size=(10, 1)),
 
-        sg.Text('Update sleep (s):', size=(18, 1)),
+        sg.Text('Update sleep (s):', size=(19, 1)),
         sg.Input(str(update_sleep), key='-SLEEP-', size=(10, 1))
     ],
 
     # Row 2
     [
-        sg.Text('Down probability:', size=(18, 1)),
+        sg.Text('Down probability:', size=(19, 1)),
         sg.Input(str(down_probability), key='-DOWN-', size=(10, 1)),
 
-        sg.Text('Sweep Burn-in count:', size=(18, 1)),
+        sg.Text('Equilibraiton sweep count:', size=(19, 1)),
         sg.Input(str(burn_in_iteration_count), key='-BURNIN-', size=(10, 1))
     ],
 
     # Row 3
     [
-        sg.Text('Lattice size n:', size=(18, 1)),
+        sg.Text('Lattice size n:', size=(19, 1)),
         sg.Input(str(n), key='-N-', size=(10, 1))
     ],
 
@@ -388,6 +391,7 @@ single_simulation_tab_layout = [
         sg.Button('Start', key='-START-'),
         sg.Button('Stop', key='-STOP-'),
         sg.Button('Reset', key='-RESET-'),
+        sg.Button('Save', key='-SAVE-'),
         sg.Button('Exit', key='-EXIT-')
     ],
 
@@ -406,31 +410,31 @@ single_simulation_tab_layout = [
 multi_simulation_tab_layout = [
     # Row 1
     [
-        sg.Text('Reduced T:', size=(18, 1)),
+        sg.Text('Reduced T:', size=(19, 1)),
         sg.Input(str(multi_T_red), key='-MULTI-T-', size=(10, 1)),
 
-        sg.Text('Steps per sweep:', size=(18, 1)),
+        sg.Text('Steps per sweep:', size=(19, 1)),
         sg.Input(str(multi_sweep_steps), key='-MULTI-STEPS-', size=(10, 1)),
 
-        sg.Text('Update sleep (s):', size=(18, 1)),
+        sg.Text('Update sleep (s):', size=(19, 1)),
         sg.Input(str(multi_update_sleep), key='-MULTI-SLEEP-', size=(10, 1))
     ],
 
     # Row 2
     [
-        sg.Text('Down probability:', size=(18, 1)),
+        sg.Text('Down probability:', size=(19, 1)),
         sg.Input(str(multi_down_probability), key='-MULTI-DOWN-', size=(10, 1)),
 
-        sg.Text('Sweep Burn-in count:', size=(18, 1)),
+        sg.Text('Equilibration sweep count:', size=(19, 1)),
         sg.Input(str(multi_burn_in_iteration_count), key='-MULTI-BURNIN-', size=(10, 1))
     ],
 
     # Row 3
     [
-        sg.Text('Lattice size n:', size=(18, 1)),
+        sg.Text('Lattice size n:', size=(19, 1)),
         sg.Input(str(multi_n), key='-MULTI-N-', size=(10, 1)),
 
-        sg.Text('Sweeps per simulation:', size=(18, 1)),
+        sg.Text('Sweeps per simulation:', size=(19, 1)),
         sg.Input(str(steps_per_simulation), key='-MULTI-STEPS-PER-SIM-', size=(10, 1))
     ],
 
@@ -439,6 +443,7 @@ multi_simulation_tab_layout = [
         sg.Button('Start', key='-MULTI-START-'),
         sg.Button('Stop', key='-MULTI-STOP-'),
         sg.Button('Reset', key='-MULTI-RESET-'),
+        sg.Button('Save', key='-MULTI-SAVE-'),
         sg.Button('Exit', key='-MULTI-EXIT-')
     ],
 
@@ -542,7 +547,7 @@ if __name__ == '__main__':
 
                 if burn_in_iteration_count < 0:
                     raise ValueError(
-                        "Burn-in count must be 0 or greater"
+                        "Equilibration count must be 0 or greater"
                     )
 
             except ValueError as e:
@@ -575,6 +580,16 @@ if __name__ == '__main__':
         elif event == '-STOP-':
 
             stop_event.set()
+
+        elif event == '-SAVE-':
+
+            now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            f = open(f'{DATA_PATH}Single simulation data from {now}.txt', "x")
+            f.write(f'Spin matrix: {spin_matrix}\n')
+            f.write(f'Magnetisation history: {m_history}\n')
+            f.write(f'Energy per spin history: {E_history}\n')
+            f.write(f'Heat capacity history: {C_history}')
+            f.close()
 
         # RESET button press functionality
         elif event == '-RESET-':
@@ -614,7 +629,7 @@ if __name__ == '__main__':
 
                 if burn_in_iteration_count < 0:
                     raise ValueError(
-                        "Burn-in count must be 0 or greater"
+                        "Equilibration count must be 0 or greater"
                     )
 
             except ValueError as e:
@@ -670,7 +685,7 @@ if __name__ == '__main__':
                     raise ValueError("Steps per sweep must be greater than 0")
 
                 if multi_burn_in_iteration_count < 0:
-                    raise ValueError("Burn-in count must be 0 or greater")
+                    raise ValueError("Equilibration count must be 0 or greater")
 
                 if steps_per_simulation <= 0:
                     raise ValueError("Steps per simulation must be greater than 0")
@@ -705,6 +720,15 @@ if __name__ == '__main__':
 
             multi_stop_event.set()
 
+        elif event == '-MULTI-SAVE-':
+
+            now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            f = open(f'{DATA_PATH}Multi-simulation data from {now}.txt', "x")
+            f.write(f'Magnetisation history: {multi_m_history}\n')
+            f.write(f'Energy per spin history: {multi_E_history}\n')
+            f.write(f'Heat capacity history: {multi_C_history}')
+            f.close()
+
         # RESET button press functionality in multi-simulation tab
         elif event == '-MULTI-RESET-':
 
@@ -735,7 +759,7 @@ if __name__ == '__main__':
                     raise ValueError("Steps per sweep must be greater than 0")
 
                 if multi_burn_in_iteration_count < 0:
-                    raise ValueError("Burn-in count must be 0 or greater")
+                    raise ValueError("Equilibration count must be 0 or greater")
 
                 if steps_per_simulation <= 0:
                     raise ValueError("Sweeps per simulation must be greater than 0")
