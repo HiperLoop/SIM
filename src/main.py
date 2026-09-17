@@ -181,7 +181,7 @@ def meta_meta_simulation(value_count: int, batch_count: int, down_probability: f
 
 def main():
     '''Main function that runs the simulation or meta_simulation.'''
-    meta_meta_simulation(61, 2, 0.5, 1300, 1000, np.asarray([2, 2.5]), 50, 10000)    
+    meta_meta_simulation(101, 4, 0.5, 1300, 1000, np.asarray([2, 2.5]), 50, 20000)    
 
 if __name__=="__main__":
     '''Execution helper.'''
