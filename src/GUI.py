@@ -91,7 +91,7 @@ def get_iteration_quantities(spin_matrix: np.ndarray):
     '''Function that aggregates the magnetisation per spin, the system energy and squared system energy and outputs them.'''
     mag_per_spin = get_magnetisation_per_spin(spin_matrix)
     E = get_reduced_system_energy(spin_matrix)
-    return mag_per_spin, E, E**2
+    return abs(mag_per_spin), E, E**2
 
 def update_aggregate_quantities(spin_matrix: np.ndarray, agg_m: float, agg_E: float, agg_E2: float):
     '''Function that appends the running total of the magnetisation per spin, the system energy and squared system energy.'''
@@ -220,7 +220,7 @@ def reset_multi_simulation():
 def multi_acquisition_thread(window, stop_event, local_rng):
     """Generate/acquire data continuously in the background using multi-core processing."""
 
-    global simulation_count, multi_sim_agg_m, multi_sim_agg_E, multi_sim_agg_C
+    global simulation_count, multi_sim_agg_m, multi_sim_agg_E, multi_sim_agg_C, multi_T_red
 
     # Zero out multi-simulation aggregate variables
     multi_sim_agg_m = 0
@@ -241,7 +241,7 @@ def multi_acquisition_thread(window, stop_event, local_rng):
             futures = [executor.submit(run_simulation_task, task) for task in tasks]
 
             for future in futures:
-                '''For each simualtion perfrom simulation() and hgather the average quantities.'''
+                '''For each simualtion perfrom simulation() and gather the average quantities.'''
                 if stop_event.is_set():
                     break
                 current_sim_agg_m, current_sim_agg_E, current_sim_agg_C = future.result()
