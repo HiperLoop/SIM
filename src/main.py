@@ -6,14 +6,43 @@ import matplotlib.pyplot as plt
 import numpy as np
 from numba import jit
 
+# Multithreading initialisations
 stop_event = threading.Event()
 worker = None
 
-rng = np.random.default_rng()   # randomiser initialisation
+DATA_PATH: str = "./data"               # Default: ""       # Relative path to folder for data saving
+FIGURE_PATH: str = "./figures"          # Default: ""       # Relative path to foler for figure saving
+SAVE_DATA: bool = False                 # Default: False    # Whether to save data at the end
+SAVE_FIGURE: bool = False               # Default: False    # Whether to save the figure at the end
 
-T_red = 1                       # Reduced temperature
-n:int = 20                      # Sqrt of number of spins
-N:int = n*n                     # Number of spins
+RANDOMNESS_SEED: int | None = 5         # Default: 5        # Seed for randomness to get reproducable results
+
+LATTICE_SIDE_SIZE: int = 50             # Default: 50       # In the instructions refered to as n, the spin lattice is of size n*n
+INITIAL_DOWN_PROBABILITY: float = 0.5   # Default: 0.5      # Probability that any given spin in the initial configuration is spin down
+
+START_TEMPERATURE: float = 2.0          # Default: 2.0      # Lower temperature limit for the sweep over temperatures
+END_TEMPERATURE: float = 2.5            # Default: 2.5      # Upper temperature limit for the sweep over temperatures
+TEMPERATURE_STEPS: int = 11             # Default: 111      # Number of temperature values to simualte
+
+SIMULATION_BATCH_COUNT: int = 1         # Default: 4        # Number of simulation batches to perform per temperature
+BATCH_CPU_CORE_LIMIT: int | None = None # Default: None     # Limit the number of CPU cores to a specified number
+
+SIMULATION_SWEEP_COUNT: int = 1300      # Default: 1300     # Number of sweeps to perform in all simulations. Values are collected at the end of every sweep
+EQUILIBRATION_SWEEP_COUNT: int = 1000   # Default: 1000     # Number of sweeps during which data is not collected to give the system time to reach equilibrium
+ITERATIONS_PER_SWEEP: int = 10000       # Default: 10000    # Number of spin-flip-attempts per sweep
+
+simulation_parameters = [
+    TEMPERATURE_STEPS,                    
+    SIMULATION_BATCH_COUNT,                      
+    BATCH_CPU_CORE_LIMIT,                   
+    INITIAL_DOWN_PROBABILITY,
+    SIMULATION_SWEEP_COUNT,
+    EQUILIBRATION_SWEEP_COUNT,
+    np.asarray([START_TEMPERATURE, END_TEMPERATURE]),
+    LATTICE_SIDE_SIZE,
+    ITERATIONS_PER_SWEEP,
+    RANDOMNESS_SEED
+]
 
 def show_spins(spin_matrix: np.ndarray):
     '''Function to display the spin matrix as a rectangular field with colours corresponding to spin values'''
@@ -99,49 +128,54 @@ def get_average_quantities(agg_m: float, agg_E: float, agg_E2: float, iterations
     return abs(avg_m), avg_E / N, heat_capacity
 
 @jit(nopython=True)
-def simulation(random_seed: int, down_probability: float, iterations: int, burn_in_iterations: int, T: float, n: int, sweeps: int):
+def simulation(random_seed: int, down_probability: float, sweeps: int, burn_in_sweeps: int, T: float, n: int, iterations: int):
     '''Function that performs a simulation with a seed and initial down_probability for the spin matrix.
     It runs the simulation for iterations times sweeps metropolis algorithm steps.
     The average quantities are calculated from the burn_in_iterations iteration forwards at interval of sweeps.
     It returns the average magnetisation, average energy per spin and a heat capacity estimate.'''
-    if random_seed != 0:
-        np.random.seed(random_seed)
+    np.random.seed(random_seed)
         
     agg_m = 0.0
     agg_E = 0.0
     agg_E2 = 0.0
-    spin_matrix: np.ndarray = generate_initial_spin_orientations(down_probability, n, 0)
-    
-    effective_samples = max(1, iterations - burn_in_iterations)
-    
-    for i in range(iterations):
-        for _ in range(sweeps):
+    spin_matrix: np.ndarray = generate_initial_spin_orientations(down_probability, n, 0) # Generate initial spin matrix
+
+    effective_samples = max(1, sweeps - burn_in_sweeps) # Get number of sweeps with data collection
+
+    # Perform sweeps
+    for i in range(sweeps):
+        for _ in range(iterations):
             metropolis_algorithm_step(spin_matrix, T, n)
-        if i >= burn_in_iterations:
+        if i >= burn_in_sweeps:
             agg_m, agg_E, agg_E2 = update_aggregate_quantities(spin_matrix, agg_m, agg_E, agg_E2)
 
+    # Return average quantities from simulation
     return get_average_quantities(agg_m, agg_E, agg_E2, effective_samples, T, n**2)
 
 def run_simulation_task(args):
     """Worker function top-level wrapper for multiprocessing."""
     return simulation(*args)
 
-def meta_simulation(batch_count: int, down_probability: float, iterations: int, burn_in_iterations: int, T: float, n: int, sweeps: int, stop_event: threading.Event, simulation_seeds: np.ndarray | None = None):
+def meta_simulation(batch_count: int, down_probability: float, sweeps: int, burn_in_sweeps: int, T: float, n: int, iterations: int, stop_event: threading.Event, core_limit: int | None, rng_seed: int | None = None):
     '''Function that performs multiple simulations and aggregates meta averages from the simulation averages.'''
-    num_cores = max(1, (os.cpu_count() or 1) - 1)
-    total_sims = batch_count * num_cores
-    if simulation_seeds is None: 
-        simulation_seeds = rng.integers(0, 1000000, size=total_sims)
+    # Get number of usable cores per batch, either user defined maximum or maximum available cores
+    num_cores = min(max(1, (os.cpu_count() or 1) - 1), core_limit) if core_limit else max(1, (os.cpu_count() or 1) - 1)
+    total_sims = batch_count * num_cores # Total number of simualtions to perform
+
+    # generate seed for simulations absed on set seed or randomly
+    simulation_seeds = np.random.default_rng(rng_seed).integers(1, None, size=total_sims)
         
     meta_agg_m = 0.0
     meta_agg_E = 0.0
     meta_agg_C = 0.0
-    
+
+    # generate simualtion tasks for multithreadding
     tasks = [
-        (int(simulation_seeds[i]), down_probability, iterations, burn_in_iterations, T, n, sweeps)
+        (int(simulation_seeds[i]), down_probability, sweeps, burn_in_sweeps, T, n, iterations)
         for i in range(total_sims)
     ]
-    
+
+    # Execute all tasks
     with ProcessPoolExecutor(max_workers=num_cores) as executor:
         futures = [executor.submit(run_simulation_task, task) for task in tasks]
         for sim_counter, future in enumerate(futures, 1):
@@ -155,17 +189,24 @@ def meta_simulation(batch_count: int, down_probability: float, iterations: int, 
         
     return meta_agg_m / total_sims, meta_agg_E / total_sims, meta_agg_C / total_sims
 
-def meta_meta_simulation(value_count: int, batch_count: int, down_probability: float, iterations: int, burn_in_iterations: int, temp_range: np.ndarray, n: int, sweeps: int):
-    m_data = np.zeros(value_count)
-    C_data = np.zeros(value_count)
+def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | None, down_probability: float, sweeps: int, burn_in_sweeps: int, temp_range: np.ndarray, n: int, iterations: int, rand_seed: int | None):
+    '''Function that sweeps across temperature range given by temp_range and performs a metasimulation with batch_count * # available cores simulations.
+    It then displayes the values of averagre absolute magnetisation and heat capacity for the reduced temperature values.'''
+    m_data: np.ndarray = np.zeros(value_count)
+    C_data: np.ndarray = np.zeros(value_count)
+
+    # Get temperatures
     temps: np.ndarray = np.linspace(temp_range[0], temp_range[1], value_count, endpoint=True)
+    
+    # Get relevant values from metasimulation per temperature
     for i in range(value_count):
         print(f'Starting temperature {i+1}/{value_count}')
-        m_data[i], _, C_data[i] = meta_simulation(batch_count, down_probability, iterations, burn_in_iterations, temps[i], n, sweeps, stop_event)
+        m_data[i], _, C_data[i] = meta_simulation(batch_count, down_probability, sweeps, burn_in_sweeps, temps[i], n, iterations, stop_event, core_limit, rand_seed)
         print(f' reduced temperature is: {temps[i]}')
         print(f' average magnetisation is: {m_data[i]}')
         print(f' average heat capacity is: {C_data[i]}')
 
+    # Plot relevant quantities
     plt.subplot(121)
     plt.plot(temps, m_data)
     plt.title("Absolute magnetisation over reduced temperature")
@@ -180,8 +221,8 @@ def meta_meta_simulation(value_count: int, batch_count: int, down_probability: f
     plt.show()
 
 def main():
-    '''Main function that runs the simulation or meta_simulation.'''
-    meta_meta_simulation(101, 4, 0.5, 1300, 1000, np.asarray([2, 2.5]), 50, 20000)    
+    '''Main function that runs the simulations.'''
+    meta_meta_simulation(*simulation_parameters)
 
 if __name__=="__main__":
     '''Execution helper.'''
