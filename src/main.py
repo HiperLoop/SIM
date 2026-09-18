@@ -4,6 +4,8 @@ from concurrent.futures import ProcessPoolExecutor
 
 import matplotlib.pyplot as plt
 import numpy as np
+import datetime
+import csv
 from numba import jit
 
 # Multithreading initialisations
@@ -12,8 +14,8 @@ worker = None
 
 DATA_PATH: str = "./data"               # Default: ""       # Relative path to folder for data saving
 FIGURE_PATH: str = "./figures"          # Default: ""       # Relative path to foler for figure saving
-SAVE_DATA: bool = False                 # Default: False    # Whether to save data at the end
-SAVE_FIGURE: bool = False               # Default: False    # Whether to save the figure at the end
+SAVE_DATA: bool = True                  # Default: False    # Whether to save data at the end
+SAVE_FIGURE: bool = True                # Default: False    # Whether to save the figure at the end
 
 RANDOMNESS_SEED: int | None = 5         # Default: 5        # Seed for randomness to get reproducable results
 
@@ -25,7 +27,7 @@ END_TEMPERATURE: float = 2.5            # Default: 2.5      # Upper temperature 
 TEMPERATURE_STEPS: int = 11             # Default: 111      # Number of temperature values to simualte
 
 SIMULATION_BATCH_COUNT: int = 1         # Default: 4        # Number of simulation batches to perform per temperature
-BATCH_CPU_CORE_LIMIT: int | None = None # Default: None     # Limit the number of CPU cores to a specified number
+BATCH_CPU_CORE_LIMIT: int = 7           # Default: None     # Limit the number of CPU cores to a specified number
 
 SIMULATION_SWEEP_COUNT: int = 1300      # Default: 1300     # Number of sweeps to perform in all simulations. Values are collected at the end of every sweep
 EQUILIBRATION_SWEEP_COUNT: int = 1000   # Default: 1000     # Number of sweeps during which data is not collected to give the system time to reach equilibrium
@@ -157,12 +159,13 @@ def run_simulation_task(args):
     return simulation(*args)
 
 def meta_simulation(batch_count: int, down_probability: float, sweeps: int, burn_in_sweeps: int, T: float, n: int, iterations: int, stop_event: threading.Event, core_limit: int | None, rng_seed: int | None = None):
-    '''Function that performs multiple simulations and aggregates meta averages from the simulation averages.'''
+    '''Function that performs multiple simulations and aggregates meta averages from the simulation averages.
+    This function is optimized for multithreadding so that we can run an adequate amount of simulations in the 20 minutes.'''
     # Get number of usable cores per batch, either user defined maximum or maximum available cores
     num_cores = min(max(1, (os.cpu_count() or 1) - 1), core_limit) if core_limit else max(1, (os.cpu_count() or 1) - 1)
     total_sims = batch_count * num_cores # Total number of simualtions to perform
 
-    # generate seed for simulations absed on set seed or randomly
+    # generate seed for simulations based on set seed or randomly
     simulation_seeds = np.random.default_rng(rng_seed).integers(1, None, size=total_sims)
         
     meta_agg_m = 0.0
@@ -175,7 +178,9 @@ def meta_simulation(batch_count: int, down_probability: float, sweeps: int, burn
         for i in range(total_sims)
     ]
 
-    # Execute all tasks
+    # Execute all tasks where the amount of simulations ran is equal to the number of cores of the machine it is running on.
+    # IMPORTANT: We currently limit this to 7 to reflefct the TA's machine. 
+    # In case this is ran on a machine with less cores, the simulation results will differ.
     with ProcessPoolExecutor(max_workers=num_cores) as executor:
         futures = [executor.submit(run_simulation_task, task) for task in tasks]
         for sim_counter, future in enumerate(futures, 1):
@@ -206,19 +211,41 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
         print(f' average magnetisation is: {m_data[i]}')
         print(f' average heat capacity is: {C_data[i]}')
 
-    # Plot relevant quantities
-    plt.subplot(121)
-    plt.plot(temps, m_data)
-    plt.title("Absolute magnetisation over reduced temperature")
-    plt.xlabel("Reduced temperature")
-    plt.ylabel("Absolute magnetisation")
+    # Plot relevant quantities and save to a figure if this is set to true at the top
+    if SAVE_FIGURE:
+        os.makedirs(FIGURE_PATH, exist_ok=True)
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        figure_path = os.path.join(FIGURE_PATH, f'{timestamp}.png')
 
-    plt.subplot(122)
-    plt.plot(temps, C_data)
-    plt.title("Heat capacity over reduced temperature")
-    plt.xlabel("Reduced temperature")
-    plt.ylabel("Heat capacity")
-    plt.show()
+        plt.subplot(121)
+        plt.plot(temps, m_data)
+        plt.title("Absolute magnetisation over reduced temperature")
+        plt.xlabel("Reduced temperature")
+        plt.ylabel("Absolute magnetisation")
+
+        plt.subplot(122)
+        plt.plot(temps, C_data)
+        plt.title("Heat capacity over reduced temperature")
+        plt.xlabel("Reduced temperature")
+        plt.ylabel("Heat capacity")
+        plt.savefig(figure_path)
+        plt.close()
+    # Saves the data to a csv file if it is set to true 
+    if SAVE_DATA:
+        os.makedirs(DATA_PATH, exist_ok=True)
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        file_path = os.path.join(DATA_PATH, f'{timestamp}.csv')
+
+        with open(file_path, 'w', newline='') as csvfile:
+            fieldnames = ['temps', 'abs_magnetisation', 'Heat Capacity']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            for i in range(len(temps)):
+                writer.writerow({
+                    'temps': temps[i],
+                    'abs_magnetisation': m_data[i],
+                    'Heat Capacity': C_data[i],
+                })
 
 def main():
     '''Main function that runs the simulations.'''
