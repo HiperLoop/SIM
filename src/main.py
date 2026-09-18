@@ -292,7 +292,9 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
 
 def main():
     '''Main function that runs the simulations.'''
+    print("Simulation started")
     meta_meta_simulation(*simulation_parameters)
+    print("Simulation ended")
 
 if __name__=="__main__":
     '''Execution helper.'''
