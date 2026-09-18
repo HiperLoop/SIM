@@ -26,9 +26,10 @@ INITIAL_DOWN_PROBABILITY: float = 0.5   # Default: 0.5      # Probability that a
 
 START_TEMPERATURE: float = 2.0          # Default: 2.0      # Lower temperature limit for the sweep over temperatures
 END_TEMPERATURE: float = 2.5            # Default: 2.5      # Upper temperature limit for the sweep over temperatures
-TEMPERATURE_STEPS: int = 15             # Default: 111      # Number of temperature values to simualte
+TEMPERATURE_STEPS: int = 2              # Default: 111      # Number of temperature values to simualte
 
-SIMULATION_BATCH_COUNT: int = 8         # Default: 4        # Number of simulation batches to perform per temperature
+#This is where the amount of simulations per parameter is defined
+SIMULATION_BATCH_COUNT: int = 1         # Default: 4        # Number of simulation batches to perform per temperature
 BATCH_CPU_CORE_LIMIT: int = 7           # Default: None     # Limit the number of CPU cores to a specified number
 
 SIMULATION_SWEEP_COUNT: int = 1300      # Default: 1300     # Number of sweeps to perform in all simulations. Values are collected at the end of every sweep
@@ -50,6 +51,23 @@ simulation_parameters = [
     FIGURE_PATH,
     SAVE_DATA,
     SAVE_FIGURE
+]
+# Added the names as strings so that we can put the parameters in the csv files
+simulation_parameter_names = [
+    "TEMPERATURE_STEPS",
+    "SIMULATION_BATCH_COUNT",
+    "BATCH_CPU_CORE_LIMIT",
+    "INITIAL_DOWN_PROBABILITY",
+    "SIMULATION_SWEEP_COUNT",
+    "EQUILIBRATION_SWEEP_COUNT",
+    "TEMPERATURE_RANGE",
+    "LATTICE_SIDE_SIZE",
+    "ITERATIONS_PER_SWEEP",
+    "RANDOMNESS_SEED",
+    "DATA_PATH",
+    "FIGURE_PATH",
+    "SAVE_DATA",
+    "SAVE_FIGURE",
 ]
 
 def show_spins(spin_matrix: np.ndarray):
@@ -244,6 +262,13 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
         with open(file_path, 'w', newline='') as csvfile:
             fieldnames = ['temps', 'abs_magnetisation', 'Heat Capacity']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            csvfile.write("# ================================================================================================\n")
+            csvfile.write("# This file contains the simulated magnetisation and heat capacity per reduced temperature.\n")
+            csvfile.write("# Simulation parameters:\n")
+            for name, value in zip(simulation_parameter_names, simulation_parameters):
+                csvfile.write(f"# {name} = {value!r}\n")
+            csvfile.write("# ================================================================================================\n")
+            csvfile.write("#\n")
             writer.writeheader()
             for i in range(len(temps)):
                 writer.writerow({
