@@ -18,6 +18,7 @@ DATA_PATH: str = "./data"               # Default: ""       # Relative path to f
 FIGURE_PATH: str = "./figures"          # Default: ""       # Relative path to foler for figure saving
 SAVE_DATA: bool = True                  # Default: False    # Whether to save data at the end
 SAVE_FIGURE: bool = True                # Default: False    # Whether to save the figure at the end
+DEBUG_MODE: bool = True                 # Default: False    # Whether intermediate values are printed into the terminal
 
 RANDOMNESS_SEED: int | None = 5         # Default: 5        # Seed for randomness to get reproducable results
 
@@ -29,7 +30,7 @@ END_TEMPERATURE: float = 2.5            # Default: 2.5      # Upper temperature 
 TEMPERATURE_STEPS: int = 61             # Default: 111      # Number of temperature values to simualte
 
 #This is where the amount of simulations per parameter is defined
-SIMULATION_BATCH_COUNT: int = 1         # Default: 4        # Number of simulation batches to perform per temperature
+SIMULATION_BATCH_COUNT: int = 8         # Default: 4        # Number of simulation batches to perform per temperature
 BATCH_CPU_CORE_LIMIT: int = 7           # Default: None     # Limit the number of CPU cores to a specified number
 
 SIMULATION_SWEEP_COUNT: int = 1300      # Default: 1300     # Number of sweeps to perform in all simulations. Values are collected at the end of every sweep
@@ -50,7 +51,8 @@ simulation_parameters = [
     DATA_PATH,
     FIGURE_PATH,
     SAVE_DATA,
-    SAVE_FIGURE
+    SAVE_FIGURE,
+    DEBUG_MODE
 ]
 # Added the names as strings so that we can put the parameters in the csv files
 simulation_parameter_names = [
@@ -182,7 +184,7 @@ def run_simulation_task(args):
     """Worker function top-level wrapper for multiprocessing."""
     return simulation(*args)
 
-def meta_simulation(batch_count: int, down_probability: float, sweeps: int, burn_in_sweeps: int, T: float, n: int, iterations: int, stop_event: threading.Event, core_limit: int | None, rng_seed: int | None = None):
+def meta_simulation(batch_count: int, down_probability: float, sweeps: int, burn_in_sweeps: int, T: float, n: int, iterations: int, stop_event: threading.Event, core_limit: int | None, DEBUG_MODE: bool, rng_seed: int | None = None):
     '''Function that performs multiple simulations and aggregates meta averages from the simulation averages.
     This function is optimized for multithreadding so that we can run an adequate amount of simulations in the 20 minutes.'''
     # Get number of usable cores per batch, either user defined maximum or maximum available cores
@@ -196,7 +198,7 @@ def meta_simulation(batch_count: int, down_probability: float, sweeps: int, burn
     meta_agg_E = 0.0
     meta_agg_C = 0.0
 
-    start_time = time.perf_counter()
+    if DEBUG_MODE: start_time = time.perf_counter()
     # generate simualtion tasks for multithreadding
     tasks = [
         (int(simulation_seeds[i]), down_probability, sweeps, burn_in_sweeps, T, n, iterations)
@@ -215,12 +217,12 @@ def meta_simulation(batch_count: int, down_probability: float, sweeps: int, burn
             meta_agg_m += m
             meta_agg_E += E
             meta_agg_C += C
-            print(f'Completed simulation {sim_counter}/{total_sims}')
+            if DEBUG_MODE: print(f'Completed simulation {sim_counter}/{total_sims}')
 
-    print(f'Temperature simulations took {time.perf_counter() - start_time} s')
+    if DEBUG_MODE: print(f'Temperature simulations took {time.perf_counter() - start_time} s')
     return meta_agg_m / total_sims, meta_agg_E / total_sims, meta_agg_C / total_sims
 
-def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | None, down_probability: float, sweeps: int, burn_in_sweeps: int, temp_range: np.ndarray, n: int, iterations: int, rand_seed: int | None, DATA_PATH: str, FIGURE_PATH: str, SAVE_DATA: bool, SAVE_FIGURE: bool):
+def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | None, down_probability: float, sweeps: int, burn_in_sweeps: int, temp_range: np.ndarray, n: int, iterations: int, rand_seed: int | None, DATA_PATH: str, FIGURE_PATH: str, SAVE_DATA: bool, SAVE_FIGURE: bool, DEBUG_MODE: bool):
     '''Function that sweeps across temperature range given by temp_range and performs a metasimulation with batch_count * # available cores simulations.
     It then displayes the values of averagre absolute magnetisation and heat capacity for the reduced temperature values.'''
     start_time = time.perf_counter()
@@ -232,11 +234,12 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
     
     # Get relevant values from metasimulation per temperature
     for i in range(value_count):
-        print(f'Starting temperature {i+1}/{value_count}')
-        m_data[i], _, C_data[i] = meta_simulation(batch_count, down_probability, sweeps, burn_in_sweeps, temps[i], n, iterations, stop_event, core_limit, rand_seed)
-        print(f' reduced temperature is: {temps[i]}')
-        print(f' average magnetisation is: {m_data[i]}')
-        print(f' average heat capacity is: {C_data[i]}')
+        if DEBUG_MODE: print(f'Starting temperature {i+1}/{value_count}')
+        m_data[i], _, C_data[i] = meta_simulation(batch_count, down_probability, sweeps, burn_in_sweeps, temps[i], n, iterations, stop_event, core_limit, DEBUG_MODE, rand_seed)
+        if DEBUG_MODE:
+            print(f' reduced temperature is: {temps[i]}')
+            print(f' average magnetisation is: {m_data[i]}')
+            print(f' average heat capacity is: {C_data[i]}')
 
     # Plot relevant quantities and save to a figure if this is set to true at the top
     timestamp = datetime.datetime.now(pytz.timezone('Europe/Amsterdam')).strftime('%Y-%m-%d_%H-%M-%S')
@@ -259,7 +262,7 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
         plt.close()
 
     minute_sim_time: float = (time.perf_counter() - start_time) / 60
-    print(f'The whole simulation took {minute_sim_time} minutes.')
+    if DEBUG_MODE: print(f'The whole simulation took {minute_sim_time} minutes.')
     # Saves the data to a csv file if the responding value at the top is set to True. Name of the file is a timestamp
     if SAVE_DATA:
         os.makedirs(DATA_PATH, exist_ok=True)
@@ -270,9 +273,9 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             csvfile.write("# ================================================================================================\n")
             csvfile.write("# This file contains the simulated magnetisation and heat capacity per reduced temperature.\n")
+            csvfile.write(f"# The simualtion ran for {minute_sim_time} minutes.\n")
             csvfile.write("# Simulation parameters:\n")
-            for name, value in zip(simulation_parameter_names, simulation_parameters):
-                csvfile.write(f"# {name} = {value!r}\n")
+            csvfile.writelines(f"# {name} = {value!r}\n" for name, value in zip(simulation_parameter_names, simulation_parameters))
             csvfile.write("# ================================================================================================\n")
             csvfile.write("#\n")
             writer.writeheader()
