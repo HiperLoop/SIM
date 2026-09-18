@@ -24,9 +24,9 @@ INITIAL_DOWN_PROBABILITY: float = 0.5   # Default: 0.5      # Probability that a
 
 START_TEMPERATURE: float = 2.0          # Default: 2.0      # Lower temperature limit for the sweep over temperatures
 END_TEMPERATURE: float = 2.5            # Default: 2.5      # Upper temperature limit for the sweep over temperatures
-TEMPERATURE_STEPS: int = 11             # Default: 111      # Number of temperature values to simualte
+TEMPERATURE_STEPS: int = 15             # Default: 111      # Number of temperature values to simualte
 
-SIMULATION_BATCH_COUNT: int = 1         # Default: 4        # Number of simulation batches to perform per temperature
+SIMULATION_BATCH_COUNT: int = 8         # Default: 4        # Number of simulation batches to perform per temperature
 BATCH_CPU_CORE_LIMIT: int = 7           # Default: None     # Limit the number of CPU cores to a specified number
 
 SIMULATION_SWEEP_COUNT: int = 1300      # Default: 1300     # Number of sweeps to perform in all simulations. Values are collected at the end of every sweep
@@ -212,9 +212,9 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
         print(f' average heat capacity is: {C_data[i]}')
 
     # Plot relevant quantities and save to a figure if this is set to true at the top
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     if SAVE_FIGURE:
         os.makedirs(FIGURE_PATH, exist_ok=True)
-        timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         figure_path = os.path.join(FIGURE_PATH, f'{timestamp}.png')
 
         plt.subplot(121)
@@ -230,10 +230,9 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
         plt.ylabel("Heat capacity")
         plt.savefig(figure_path)
         plt.close()
-    # Saves the data to a csv file if it is set to true 
+    # Saves the data to a csv file if the responding value at the top is set to True. Name of the file is a timestamp
     if SAVE_DATA:
         os.makedirs(DATA_PATH, exist_ok=True)
-        timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         file_path = os.path.join(DATA_PATH, f'{timestamp}.csv')
 
         with open(file_path, 'w', newline='') as csvfile:
