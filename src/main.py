@@ -1,9 +1,11 @@
+import datetime
 import os
 import threading
 from concurrent.futures import ProcessPoolExecutor
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pytz
 import datetime
 import csv
 from numba import jit
@@ -43,7 +45,11 @@ simulation_parameters = [
     np.asarray([START_TEMPERATURE, END_TEMPERATURE]),
     LATTICE_SIDE_SIZE,
     ITERATIONS_PER_SWEEP,
-    RANDOMNESS_SEED
+    RANDOMNESS_SEED,
+    DATA_PATH,
+    FIGURE_PATH,
+    SAVE_DATA,
+    SAVE_FIGURE
 ]
 
 def show_spins(spin_matrix: np.ndarray):
@@ -194,7 +200,7 @@ def meta_simulation(batch_count: int, down_probability: float, sweeps: int, burn
         
     return meta_agg_m / total_sims, meta_agg_E / total_sims, meta_agg_C / total_sims
 
-def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | None, down_probability: float, sweeps: int, burn_in_sweeps: int, temp_range: np.ndarray, n: int, iterations: int, rand_seed: int | None):
+def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | None, down_probability: float, sweeps: int, burn_in_sweeps: int, temp_range: np.ndarray, n: int, iterations: int, rand_seed: int | None, DATA_PATH: str, FIGURE_PATH: str, SAVE_DATA: bool, SAVE_FIGURE: bool):
     '''Function that sweeps across temperature range given by temp_range and performs a metasimulation with batch_count * # available cores simulations.
     It then displayes the values of averagre absolute magnetisation and heat capacity for the reduced temperature values.'''
     m_data: np.ndarray = np.zeros(value_count)
