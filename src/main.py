@@ -1,9 +1,11 @@
+import datetime
 import os
 import threading
 from concurrent.futures import ProcessPoolExecutor
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pytz
 from numba import jit
 
 # Multithreading initialisations
@@ -22,9 +24,9 @@ INITIAL_DOWN_PROBABILITY: float = 0.5   # Default: 0.5      # Probability that a
 
 START_TEMPERATURE: float = 2.0          # Default: 2.0      # Lower temperature limit for the sweep over temperatures
 END_TEMPERATURE: float = 2.5            # Default: 2.5      # Upper temperature limit for the sweep over temperatures
-TEMPERATURE_STEPS: int = 11             # Default: 111      # Number of temperature values to simualte
+TEMPERATURE_STEPS: int = 111            # Default: 111      # Number of temperature values to simualte
 
-SIMULATION_BATCH_COUNT: int = 1         # Default: 4        # Number of simulation batches to perform per temperature
+SIMULATION_BATCH_COUNT: int = 4         # Default: 4        # Number of simulation batches to perform per temperature
 BATCH_CPU_CORE_LIMIT: int | None = None # Default: None     # Limit the number of CPU cores to a specified number
 
 SIMULATION_SWEEP_COUNT: int = 1300      # Default: 1300     # Number of sweeps to perform in all simulations. Values are collected at the end of every sweep
@@ -41,7 +43,11 @@ simulation_parameters = [
     np.asarray([START_TEMPERATURE, END_TEMPERATURE]),
     LATTICE_SIDE_SIZE,
     ITERATIONS_PER_SWEEP,
-    RANDOMNESS_SEED
+    RANDOMNESS_SEED,
+    DATA_PATH,
+    FIGURE_PATH,
+    SAVE_DATA,
+    SAVE_FIGURE
 ]
 
 def show_spins(spin_matrix: np.ndarray):
@@ -189,7 +195,7 @@ def meta_simulation(batch_count: int, down_probability: float, sweeps: int, burn
         
     return meta_agg_m / total_sims, meta_agg_E / total_sims, meta_agg_C / total_sims
 
-def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | None, down_probability: float, sweeps: int, burn_in_sweeps: int, temp_range: np.ndarray, n: int, iterations: int, rand_seed: int | None):
+def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | None, down_probability: float, sweeps: int, burn_in_sweeps: int, temp_range: np.ndarray, n: int, iterations: int, rand_seed: int | None, DATA_PATH: str, FIGURE_PATH: str, SAVE_DATA: bool, SAVE_FIGURE: bool):
     '''Function that sweeps across temperature range given by temp_range and performs a metasimulation with batch_count * # available cores simulations.
     It then displayes the values of averagre absolute magnetisation and heat capacity for the reduced temperature values.'''
     m_data: np.ndarray = np.zeros(value_count)
@@ -206,6 +212,14 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
         print(f' average magnetisation is: {m_data[i]}')
         print(f' average heat capacity is: {C_data[i]}')
 
+    now = datetime.datetime.now(tz=pytz.timezone('Europe/Amsterdam')).strftime("%Y-%m-%d_%H-%M-%S")
+    # If SAVE_DATA save data in a txt file
+    if SAVE_DATA:
+        f = open(f'{DATA_PATH}Simulation data from {now}.txt', "x")
+        f.write(f'Magnetisation history: {m_data}\n')
+        f.write(f'Heat capacity history: {C_data}')
+        f.close()
+
     # Plot relevant quantities
     plt.subplot(121)
     plt.plot(temps, m_data)
@@ -218,6 +232,9 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
     plt.title("Heat capacity over reduced temperature")
     plt.xlabel("Reduced temperature")
     plt.ylabel("Heat capacity")
+
+    if SAVE_FIGURE:
+        plt.savefig(f'{FIGURE_PATH}Simulation figure from {now}')
     plt.show()
 
 def main():
