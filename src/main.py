@@ -29,7 +29,6 @@ START_TEMPERATURE: float = 2.0          # Default: 2.0      # Lower temperature 
 END_TEMPERATURE: float = 2.5            # Default: 2.5      # Upper temperature limit for the sweep over temperatures
 TEMPERATURE_STEPS: int = 51             # Default: 111      # Number of temperature values to simualte
 
-#This is where the amount of simulations per parameter is defined
 SIMULATION_BATCH_COUNT: int = 6         # Default: 4        # Number of simulation batches to perform per temperature
 BATCH_CPU_CORE_LIMIT: int = 7          # Default: None     # Limit the number of CPU cores to a specified number
 
@@ -150,7 +149,6 @@ def simulation(random_seed: int, down_probability: float, sweeps: int, burn_in_s
 
     effective_samples = max(1, sweeps - burn_in_sweeps) # Get number of sweeps with data collection
 
-    # Optimization: Precompute Boltzmann factors for this temperature
     exp_4 = np.exp(-4.0 / T)
     exp_8 = np.exp(-8.0 / T)
 
@@ -189,7 +187,7 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
 
     with ProcessPoolExecutor(max_workers=num_cores) as executor:
         if DEBUG_MODE:
-            # Sequential batch execution per temperature to preserve accurate debug timings and prints
+            # Sequential batch execution per temperature
             for i in range(value_count):
                 print(f'Starting temperature {i+1}/{value_count}')
                 
@@ -224,7 +222,7 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
                 print(f' average magnetisation is: {m_data[i]}')
                 print(f' average heat capacity is: {C_data[i]}')
         else:
-            # Flattened parallelization for maximum speed with no inter-temperature synchronization barriers
+            # Flattened parallelization
             tasks = [
                 (int(simulation_seeds[i, j]), down_probability, sweeps, burn_in_sweeps, temps[i], n, iterations)
                 for i in range(value_count)
