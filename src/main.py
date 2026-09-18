@@ -2,6 +2,7 @@ import csv
 import datetime
 import os
 import threading
+import time
 from concurrent.futures import ProcessPoolExecutor
 
 import matplotlib.pyplot as plt
@@ -25,7 +26,7 @@ INITIAL_DOWN_PROBABILITY: float = 0.5   # Default: 0.5      # Probability that a
 
 START_TEMPERATURE: float = 2.0          # Default: 2.0      # Lower temperature limit for the sweep over temperatures
 END_TEMPERATURE: float = 2.5            # Default: 2.5      # Upper temperature limit for the sweep over temperatures
-TEMPERATURE_STEPS: int = 2             # Default: 111      # Number of temperature values to simualte
+TEMPERATURE_STEPS: int = 61             # Default: 111      # Number of temperature values to simualte
 
 SIMULATION_BATCH_COUNT: int = 8         # Default: 4        # Number of simulation batches to perform per temperature
 BATCH_CPU_CORE_LIMIT: int = 7           # Default: None     # Limit the number of CPU cores to a specified number
@@ -177,6 +178,7 @@ def meta_simulation(batch_count: int, down_probability: float, sweeps: int, burn
     meta_agg_E = 0.0
     meta_agg_C = 0.0
 
+    start_time = time.perf_counter()
     # generate simualtion tasks for multithreadding
     tasks = [
         (int(simulation_seeds[i]), down_probability, sweeps, burn_in_sweeps, T, n, iterations)
@@ -196,12 +198,14 @@ def meta_simulation(batch_count: int, down_probability: float, sweeps: int, burn
             meta_agg_E += E
             meta_agg_C += C
             print(f'Completed simulation {sim_counter}/{total_sims}')
-        
+
+    print(f'Temperature simulations took {time.perf_counter() - start_time} s')
     return meta_agg_m / total_sims, meta_agg_E / total_sims, meta_agg_C / total_sims
 
 def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | None, down_probability: float, sweeps: int, burn_in_sweeps: int, temp_range: np.ndarray, n: int, iterations: int, rand_seed: int | None, DATA_PATH: str, FIGURE_PATH: str, SAVE_DATA: bool, SAVE_FIGURE: bool):
     '''Function that sweeps across temperature range given by temp_range and performs a metasimulation with batch_count * # available cores simulations.
     It then displayes the values of averagre absolute magnetisation and heat capacity for the reduced temperature values.'''
+    start_time = time.perf_counter()
     m_data: np.ndarray = np.zeros(value_count)
     C_data: np.ndarray = np.zeros(value_count)
 
@@ -235,6 +239,9 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
         plt.ylabel("Heat capacity")
         plt.savefig(figure_path)
         plt.close()
+
+    minute_sim_time: float = (time.perf_counter() - start_time) / 60
+    print(f'The whole simulation took {minute_sim_time} minutes.')
     # Saves the data to a csv file if the responding value at the top is set to True. Name of the file is a timestamp
     if SAVE_DATA:
         os.makedirs(DATA_PATH, exist_ok=True)
