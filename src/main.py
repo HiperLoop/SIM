@@ -25,16 +25,16 @@ RANDOMNESS_SEED: int | None = 17        # Default: 5        # Seed for randomnes
 LATTICE_SIDE_SIZE: int = 50             # Default: 50       # In the instructions refered to as n, the spin lattice is of size n*n
 INITIAL_DOWN_PROBABILITY: float = 0.5   # Default: 0.5      # Probability that any given spin in the initial configuration is spin down
 
-START_TEMPERATURE: float = 2.0          # Default: 2.0      # Lower temperature limit for the sweep over temperatures
-END_TEMPERATURE: float = 2.5            # Default: 2.5      # Upper temperature limit for the sweep over temperatures
-TEMPERATURE_STEPS: int = 51             # Default: 111      # Number of temperature values to simualte
+START_TEMPERATURE: float = 1.5          # Default: 2.0      # Lower temperature limit for the sweep over temperatures
+END_TEMPERATURE: float = 3            # Default: 2.5      # Upper temperature limit for the sweep over temperatures
+TEMPERATURE_STEPS: int = 76             # Default: 111      # Number of temperature values to simualte
 
 SIMULATION_BATCH_COUNT: int = 6         # Default: 4        # Number of simulation batches to perform per temperature
 BATCH_CPU_CORE_LIMIT: int = 7          # Default: None     # Limit the number of CPU cores to a specified number
 
 SIMULATION_SWEEP_COUNT: int = 1500      # Default: 1300     # Number of sweeps to perform in all simulations. Values are collected at the end of every sweep
 EQUILIBRATION_SWEEP_COUNT: int = 1000   # Default: 1000     # Number of sweeps during which data is not collected to give the system time to reach equilibrium
-ITERATIONS_PER_SWEEP: int = 20000       # Default: 10000    # Number of spin-flip-attempts per sweep
+ITERATIONS_PER_SWEEP: int = 25000       # Default: 10000    # Number of spin-flip-attempts per sweep
 
 simulation_parameters = [
     TEMPERATURE_STEPS,                    
