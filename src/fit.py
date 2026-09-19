@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import scipy 
+import scipy
 from matplotlib import pyplot as plt
 
 
@@ -35,4 +35,4 @@ def fit (data):
     plt.title(f'Calculated Value {c}')
     plt.show()
 
-fit(read_simulation_csv('data\\2026-09-18_11-58-03.csv'))
+fit(read_simulation_csv('data\\2026-09-19_15-02-21.csv'))
