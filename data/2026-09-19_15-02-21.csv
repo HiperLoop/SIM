@@ -9,12 +9,12 @@
 # SIMULATION_SWEEP_COUNT = 1500
 # EQUILIBRATION_SWEEP_COUNT = 1000
 # TEMPERATURE_RANGE = array([1.5, 3. ])
-# LATTICE_SIDE_SIZE = <function <lambda> at 0x000001F1943237F0>
-# ITERATIONS_PER_SWEEP = 50
-# RANDOMNESS_SEED = 27000
-# DATA_PATH = 17
-# FIGURE_PATH = './data'
-# SAVE_DATA = './figures'
+# LATTICE_SIDE_SIZE = 50
+# ITERATIONS_PER_SWEEP = 27000
+# RANDOMNESS_SEED = 17
+# DATA_PATH = './data'
+# FIGURE_PATH = './figures'
+# SAVE_DATA = True
 # SAVE_FIGURE = True
 # ================================================================================================
 #
