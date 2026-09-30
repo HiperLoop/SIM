@@ -30,7 +30,7 @@ INITIAL_DOWN_PROBABILITY: float = 0.5               # Default: 0.5      # Probab
 
 START_TEMPERATURE: float = 1.5                      # Default: 1.5      # Lower temperature limit for the sweep over temperatures
 END_TEMPERATURE: float = 3                          # Default: 3        # Upper temperature limit for the sweep over temperatures
-TEMPERATURE_STEPS: int = 76                         # Default: 76       # Number of temperature values to simualte
+TEMPERATURE_STEPS: int = 15                         # Default: 76       # Number of temperature values to simualte
 
 # Default: 1        # Distribution of temperature values so that there are more values in the middle then on the clear sides
 TEMPERATURE_DISTRIBUTION = lambda x: 10*np.exp(-((x - ((START_TEMPERATURE + END_TEMPERATURE)/2))**2)/(0.25))
@@ -193,6 +193,8 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
     start_time = time.perf_counter()
     m_data: np.ndarray = np.zeros(value_count)
     C_data: np.ndarray = np.zeros(value_count)
+    m_std: np.ndarray = np.zeros(value_count)
+    C_std: np.ndarray = np.zeros(value_count)
 
     # Get temperatures
     temps: np.ndarray = generate_temperature_grid(temp_function, temp_range[0], temp_range[1], value_count)
@@ -212,9 +214,9 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
             for i in range(value_count):
                 print(f'Starting temperature {i+1}/{value_count}')
                 
-                meta_agg_m = 0.0
-                meta_agg_E = 0.0
-                meta_agg_C = 0.0
+                meta_agg_m = np.full(total_sims, np.nan)
+                meta_agg_E = np.zeros(total_sims)
+                meta_agg_C = np.full(total_sims, np.nan)
 
                 temp_start_time = time.perf_counter()
                 
@@ -225,19 +227,21 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
                 ]
 
                 futures = [executor.submit(run_simulation_task, task) for task in tasks]
-                for sim_counter, future in enumerate(futures, 1):
+                for sim_counter, future in enumerate(futures):
                     if stop_event.is_set():
                         break
                     m, E, C = future.result()
-                    meta_agg_m += m
-                    meta_agg_E += E
-                    meta_agg_C += C
+                    meta_agg_m[sim_counter] = m
+                    meta_agg_E[sim_counter] = E
+                    meta_agg_C[sim_counter] = C
                     print(f'Completed simulation {sim_counter}/{total_sims}')
 
                 print(f'Temperature simulations took {time.perf_counter() - temp_start_time} s')
 
-                m_data[i] = meta_agg_m / total_sims
-                C_data[i] = meta_agg_C / total_sims
+                m_data[i] = np.nanmean(meta_agg_m)
+                C_data[i] = np.nanmean(meta_agg_C)
+                m_std[i] = np.nanstd(meta_agg_m)
+                C_std[i] = np.nanstd(meta_agg_C)
 
                 print(f' reduced temperature is: {temps[i]}')
                 print(f' average magnetisation is: {m_data[i]}')
@@ -251,16 +255,25 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
             ]
             
             futures = {executor.submit(run_simulation_task, task): idx for idx, task in enumerate(tasks)}
+            m_data=np.full((value_count, total_sims), np.nan)
+            C_data=np.full((value_count, total_sims), np.nan)
             for future in futures:
                 if stop_event.is_set():
                     break
                 task_idx = futures[future]
                 temp_idx = task_idx // total_sims
+                sim_idx = task_idx % total_sims
                 m, _, C = future.result()
                 
                 # Aggregate directly into the data arrays without blocking the rest of the queue
-                m_data[temp_idx] += m / total_sims
-                C_data[temp_idx] += C / total_sims
+                m_data[temp_idx][sim_idx] = m
+                C_data[temp_idx][sim_idx] = C
+            
+            m_std=np.nanstd(m_data, 1)
+            C_std=np.nanstd(C_data, 1)
+            m_data=np.nanmean(m_data,1)
+            C_data=np.nanmean(C_data,1)
+
 
     # Plot relevant quantities and save to a figure if this is set to true at the top
     timestamp = datetime.datetime.now(pytz.timezone('Europe/Amsterdam')).strftime('%Y-%m-%d_%H-%M-%S')
@@ -271,8 +284,8 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
         figure_path1 = os.path.join(FIGURE_PATH, f'MagCap-{timestamp}.svg')
         
         fig, axs = plt.subplots(2, figsize=(6.4, 8))
-        axs[0].plot(temps, m_data)
-        axs[1].plot(temps, C_data)
+        axs[0].errorbar(temps, m_data, yerr=m_std, fmt='-', capsize=3)
+        axs[1].errorbar(temps, C_data, yerr=C_std, fmt='-', capsize=3)
         axs[0].set_title("Absolute magnetisation over reduced temperature")
         axs[1].set_title("Heat capacity over reduced temperature")
         axs[0].set_xlabel("Reduced temperature")
@@ -296,7 +309,7 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
         # summarize the parameter values
         a, b = popt
         # plot input vs output
-        plt.scatter(x, y)
+        plt.errorbar(x, y, yerr=m_std, fmt='o', capsize=3)
         # define a sequence of inputs between the smallest and largest known inputs
         x_line = np.linspace(np.min(x), np.max(x), 500)
         # calculate the output for the range
@@ -316,7 +329,7 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
         file_path = os.path.join(DATA_PATH, f'{timestamp}.csv')
 
         with open(file_path, 'w', newline='') as csvfile:
-            fieldnames = ['temps', 'abs_magnetisation', 'Heat Capacity']
+            fieldnames = ['temps', 'abs_magnetisation', 'std_m', 'Heat Capacity', 'std_C']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             csvfile.write("# ================================================================================================\n")
             csvfile.write("# This file contains the simulated magnetisation and heat capacity per reduced temperature.\n")
@@ -329,8 +342,8 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
             for i in range(len(temps)):
                 writer.writerow({
                     'temps': temps[i],
-                    'abs_magnetisation': m_data[i],
-                    'Heat Capacity': C_data[i],
+                    'abs_magnetisation': m_data[i], 'std_m': m_std[i],
+                    'Heat Capacity': C_data[i], 'std_C': C_std[i],
                 })
 
 def main():
