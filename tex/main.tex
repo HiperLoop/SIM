@@ -103,6 +103,8 @@
 
 \lstset{style=mystyle}
 
+\graphicspath {{../figures/}}
+
 \begin{document}
 
 %% Title and authors using built-in LaTeX options. Change according to own preferences
@@ -158,10 +160,12 @@ Room for abstract.
             \Delta E = E_{\text{before}} - E_{\text{after}} = \sum_{\braket{j}}(-s_i)s_j - \sum_{\braket{j}}s_is_j = -2\sum_{\braket{j}}s_is_j. \label{spin_flip_energy_delta}
         \end{equation}
         We then have 2 cases. If $\Delta E \le 0$, we flip the spin orientation. If $\Delta E \ge 0$, we accept the flip with probability $p = e^{\frac{\Delta E}{T_r}}$. In order to do this, we sample a random variable $X \sim Unif(0, 1)$ and check $X < p$, in which case we accept the flip and leave the spin unflipped otherwise.\\
-        We knwo that for values of the reduced temperature below the critical temperature i.e. $T_r < T_c$ the system gets to an equilibrium state where the absolute value of the averege magnetisation goes to 1\cite{Blundell2010}.
+        We know that for values of the reduced temperature below the critical temperature i.e. $T_r < T_c$ the system gets to an equilibrium state where the absolute value of the averege magnetisation goes to 1\cite{Blundell2010}. This however takes a certain amout of spin-flip attempts before the equilibrium is reached. To calculate the average quantities $|\braket{m}|$ and $C$ we then wait for a certain amout of spin-flip attempts before gathering values then used to calculate these quantities to give the model enough time to reach equilibrium.
         \subsection{Determining parameters for final simulation}
-        \todo{Explain how we arrived at simulation parameters}
-    
+            For the simulation that produced Figure \ref{fig:results} we had a number of requirements. The first requirements was for the simulation that produces the figure we use in this article to take no longer than 20 minutes to run. This meant that we had to look for simulation parameters that produce good data but for the simulation runtime to stay within the time bound.\\
+            We already knew from test simulations that the critical temperature was somewhere in the range $1 < T_c < 3$ as we ran simualtion for $T_r = 1.5$ and $T_r = 3$ and observed the behvaiour associated with reduced temperatures being lower and higher than the critical temperature respectively. This then set the range of reduced temperatures that we were going to simulate.\\
+            We then continued to choosing a size of the lattice that we want to simulate as this, we found, had impact on the number of spin-flip attempts needed for the model to reach equilibrium. We decided to use $n = 50$ as for values of $n<20$ we found that the equilibrium was disturbed to a gread degree by the non-zero value of the temperature causing fluctuations in the spins.\\
+            We then ran multiple simulations trying to ascertain the number of spin-flip attempts needed for the $50 \cross 50$ lattice to reach equilibrium for the temperature range we wanted to study.
 
 % Note that the method section about a simulation differs from a setup and method section of a physical experiment.
 
@@ -172,6 +176,11 @@ Room for abstract.
 % Do not copy your code into the method section, instead describe the functions and actions of your code, and describe which packages or built-in functions you use.
 
 \section{Results}\label{results}
+    \begin{figure}[htbp]
+        \includegraphics[width=0.5\textwidth]{m_and_C_2.png}
+        \caption{Results}
+        \label{fig:results}
+    \end{figure}
     \todo{Give results}\\
     \todo{Give figures of results}
     
