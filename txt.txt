@@ -1,0 +1,30 @@
+\begin{document}
+    \maketitlepage
+
+    \tableofcontents
+
+    \newpage
+    \section{Abstract}
+        \todo{Write abstract}
+    \section{Introduction}
+        \subsection{The Ising model}
+            The Ising model named after the German physicist Erns Ising is a model in statistical mechanics. The model consists of discrete magnetic spin dipole moments that take values $\pm 1$ ("up" and "down" respectively) arranged on a lattice. For the purposes of our simulation we used a square lattice. The spins interact with neighbouring spins. In our implementation we consider the von Neumann neighbourgood of only 4 neighbouring spins in the $\pm x$ and $\pm y$ directions. The model exhibits phase transitions that can be associated with the gas-liquid transition or spontaneous magnetisation.
+    \subsection{Aim of study}
+            In this article we look at determining at what temperature does the Ising model undergo a phase transition. It is know from theory that under a certain critical temperature the model stabilises into completely up or down state. Conversely, above this critical, on average, the model remains a random mixture of up and down spins.
+    \section{Methodology}
+        \subsection{Metropolis algorithm}
+            \todo{Explain metropolis algorithm}
+        \subsection{Determining parameters for final simulation}
+            \todo{Explain how we arrived at simulation parameters}
+    \section{Results}
+        \todo{Give results}\\
+        \todo{Give figures of results}
+    \section{Comparison to theory}
+        \subsection{Theoretical solution for the critical phase transition temperature}
+            \todo{Give derivation of critical temperature in the Ising model}
+        \subsection{Comparison of theory and our results}
+            \todo{Compare our results with theoreticla values}
+    \section{Conclusion}
+        \todo{Conclude that our simulated values are close to theoretical vlaues}\\
+        \todo{Give potential improvements on methodology}
+\end{document}

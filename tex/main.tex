@@ -1,6 +1,5 @@
-\documentclass{article}
+\documentclass[twocolumn,a4paper,aps,amsmath,amssymb,floatfix,superscriptaddress]{revtex4-2}
 \usepackage[utf8]{inputenc}
-\usepackage[margin=2cm,includefoot]{geometry}
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{amsmath, amssymb, amsthm}
@@ -13,42 +12,47 @@
 \usepackage{appendix}
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{dcolumn}
+\usepackage{hyperref}
+\usepackage{bm}
+\usepackage[utf8]{inputenc}
 
 \definecolor{codegreen}{rgb}{0,0.6,0}
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
 \definecolor{codepurple}{rgb}{0.58,0,0.82}
 \definecolor{backcolour}{rgb}{0.95,0.95,0.92}
 
+\newcommand{\projectauthors}{Bela F. Brunner (8002193), Adam Zich (0074187)}
+\newcommand{\projectdate}{\today}
+\newcommand{\maketitlepage}{
+    \begin{titlepage}
+        \centering
+        
+        \vspace*{0.2\textheight}
+
+        {\Huge\bfseries Determining critical phase transition temperature in an Ising model simulation\par}
+        \vspace{2cm}
+
+        {\Large \projectauthors\par}
+        \vspace{2cm}
+
+        {\large \projectdate\par}
+
+        \vfill
+    \end{titlepage}
+}
+
+\newcommand{\todo}[1]{
+    \textbf{TODO: $<$#1$>$}
+}
+
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \lhead{NS-204B - Statystische fysica theorie en experiment}
-\rhead{Bela F. Brunner (8002193), Adam Zich (0074187)}
+\rhead{\projectauthors}
 \fancyfoot{}
 \fancyfoot[R]{Page \thepage /\pageref{LastPage}}
-
-\usepackage{listings}
-\usepackage{color}
- \usepackage{titling}
- \usepackage{amsfonts}
- \usepackage{pdfpages}
- \usepackage{tikz}
- \usepackage{mathrsfs}
- \usepackage{bm}
-
-\newcommand{\vba}{\mathbf{A}}
-\newcommand{\vbb}{\mathbf{B}}
-\newcommand{\C}{\mathbf{C}}
-\newcommand{\x}{\mathbf{\hat{x}}}
-\newcommand{\y}{\mathbf{\hat{y}}}
-\newcommand{\z}{\mathbf{\hat{z}}}
-\newcommand{\vr}{\mathbf{\hat r}}
-\newcommand{\thet}{\boldsymbol{{\hat \theta}}}
-\newcommand{\ph}{\boldsymbol{{\hat \phi}}}
-\newcommand{\ba}{\mathbf{a}}
-\newcommand{\bb}{\mathbf{b}}
-\newcommand{\vl}{\mathbf{l}}
-\newcommand{\vv}{\mathbf{v}}
-\def\dbar{{\mathchar'26\mkern-12mu d}}
 
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\p}{\mathbb{P}}
@@ -100,16 +104,91 @@
 \lstset{style=mystyle}
 
 \begin{document}
-\begin{center}
- \LARGE{\bfseries{ Project Article }}
- \line(1,0){430}
-\end{center}
-    \tableofcontents
-    \section{Abstract}
-    \section{Introduction}
-    \section{Methodology}
-    \section{Results}
-    \section{Comparison to theory}
-    \section{Conclusion}
-    \section{Appendix}
+
+%% Title and authors using built-in LaTeX options. Change according to own preferences
+\title{Determining critical phase transition temperature in an Ising model simulation}
+        
+\author{Bela F. Brunner}
+%Lines break automatically or can be forced with \\
+\affiliation{Department of Physics, \\
+Utrecht University}
+
+\author{Adam Zich}
+\affiliation{Department of Physics, \\
+Utrecht University}
+
+\date{\today}
+% It is always \today, today,
+% but any date may be explicitly specified
+
+\begin{abstract}
+
+Room for abstract.
+
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}\label{intro}
+    \subsection{The Ising model}
+        The Ising model named after the German physicist Erns Ising is a model in statistical mechanics. The model consists of discrete magnetic spin dipole moments that take values $\pm 1$ ("up" and "down" respectively) arranged on a lattice. For the purposes of our simulation we used a square lattice. The spins interact with neighbouring spins. In our implementation we consider the von Neumann neighbourgood of only 4 neighbouring spins in the $\pm x$ and $\pm y$ directions. The model exhibits phase transitions that can be associated with the gas-liquid transition or spontaneous magnetisation.
+    \subsection{Aim of study}
+        In this article we look at determining at what temperature does the Ising model undergo a phase transition. It is know from theory that under a certain critical temperature the model stabilises into completely up or down state. Conversely, above this critical, on average, the model remains a random mixture of up and down spins.
+    
+\section{Theory}\label{theory}
+
+Theory.
+% When the Theory is not the new aspect of the research (as is mostly the case in course experiments or experimental research in general), keep it short. Describing a starting point (e.g. a differential equation or a model), a final result (e.g. a relation under test, or a dependance) and a reference might be sufficient. 
+
+\section{Methodology}
+    \subsection{Metropolis algorithm}
+        \todo{Explain metropolis algorithm}
+    \subsection{Determining parameters for final simulation}
+        \todo{Explain how we arrived at simulation parameters}
+    
+
+% Note that the method section about a simulation differs from a setup and method section of a physical experiment.
+
+% The goal of the method section is to decribe the procedure of the experiment in such a way that a reader could reproduce the experiment (either to verify your results, or to build future research on your findings). This goal remains the same.
+
+% Instead of a diagram of the measurement setup you could include a schematic of the interactions or steps in your model.
+
+% Do not copy your code into the method section, instead describe the functions and actions of your code, and describe which packages or built-in functions you use.
+
+\section{Results}\label{results}
+    \todo{Give results}\\
+    \todo{Give figures of results}
+    
+\section{Comparison to theory}
+    \subsection{Theoretical solution for the critical phase transition temperature}
+        \todo{Give derivation of critical temperature in the Ising model}
+    \subsection{Comparison of theory and our results}
+        \todo{Compare our results with theoreticla values}
+
+\section{Conclusions}\label{conclusions}
+Conclusion.
+% Summarize the final results and answer the research question. Reflect on the strength and impact of your conclusion.
+% In principle no new information or arguments are presented in the conclusion.
+
+
+\bibliographystyle{unsrt}
+\addcontentsline{toc}{section}{Bibliography}
+%\bibliography{bibliography}            % *.bib Files
+
+%Add bbl file
+\begin{thebibliography}{10}
+
+\bibitem{chen_JAP_2003}
+F.~Chen, M.C. Cheung, P.M. Sweeney, W.D. Kirkey, M.~Furis, and A.N. Cartwright.
+%\newblock Ultrafast differential transmission spectroscopy of excitonic
+%  transitions in {I}n{G}a{N}/{G}a{N} multiple quantum wells.
+\newblock J. Appl. Phys. \textbf{93}, 4933 (2003).
+
+% You can add and cite as many new bibitems as you want; make sure to give them a unique and reccognizable name.
+
+\end{thebibliography}
+
+
 \end{document}
+%
+% ****** End of file ******
