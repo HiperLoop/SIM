@@ -131,19 +131,35 @@ Room for abstract.
 
 \section{Introduction}\label{intro}
     \subsection{The Ising model}
-        The Ising model named after the German physicist Erns Ising is a model in statistical mechanics. The model consists of discrete magnetic spin dipole moments that take values $\pm 1$ ("up" and "down" respectively) arranged on a lattice. For the purposes of our simulation we used a square lattice. The spins interact with neighbouring spins. In our implementation we consider the von Neumann neighbourgood of only 4 neighbouring spins in the $\pm x$ and $\pm y$ directions. The model exhibits phase transitions that can be associated with the gas-liquid transition or spontaneous magnetisation.
+        The Ising model named after the German physicist Erns Ising is a model in statistical mechanics. The model consists of discrete magnetic spin dipole moments that take values $\pm 1$ ("up" and "down" respectively) arranged on a lattice. For the purposes of our simulation we used a square lattice. The spins interact with neighbouring spins. The model exhibits phase transitions that can be associated with the gas-liquid transition or spontaneous magnetisation.
     \subsection{Aim of study}
         In this article we look at determining at what temperature does the Ising model undergo a phase transition. It is know from theory that under a certain critical temperature the model stabilises into completely up or down state. Conversely, above this critical, on average, the model remains a random mixture of up and down spins.
     
 \section{Theory}\label{theory}
-
-Theory.
-% When the Theory is not the new aspect of the research (as is mostly the case in course experiments or experimental research in general), keep it short. Describing a starting point (e.g. a differential equation or a model), a final result (e.g. a relation under test, or a dependance) and a reference might be sufficient. 
+    The theoretical value of the critical temperature was predicted by Lars Onsager\cite{Onsager1944} to be
+    \begin{equation}
+        T_c = \frac{2}{\ln(1 + \sqrt{2})}. \label{critical_temperature}
+    \end{equation}
+    The interaction energy between two spins is given by
+    \begin{equation}
+        E_{\text{int}} = -Js_is_j,
+    \end{equation}
+    where $J>0$ is the coupling constant fo ferromagnetic interractions and the $s_i$ being the value of spin of spin $i$.\\
+    We define the reduced interaction energy as $E_r = \frac{E_{\text{int}}}{J} = -s_is_j$.
+    The reduced interaction energy with the $j$ nearest neighbours is then
+    \begin{equation}
+        E_r = \sum_{\braket{j}}s_is_j, \label{neighbour_interaction_energy}
+    \end{equation}
 
 \section{Methodology}
     \subsection{Metropolis algorithm}
-        \todo{Explain metropolis algorithm}
-    \subsection{Determining parameters for final simulation}
+        To simulate the evolution of the Ising model we use a Monte Carlo simulation using the Metropolis algorithm. In our implementation we consider the von Neumann neighbourgood of only 4 neighbouring spins in the $\pm x$ and $\pm y$ directions. We also use a periodic boundary condition such that if we denote by $n \cross n$ the size of the lattice, we have that the spin at position $(n, i)$ is a neighbor of spin at postion $(1, i)$ and in the same way also spin at $i, n$ is neighbouring the spin at $(i, 1)$. At each iteration of the algorithm a random position is chosen in the square lattice of spins. The energy needed to flip the spin form the up to the down state or vice versa is then calculated from Eq. (\ref{neighbour_interaction_energy}) as
+        \begin{equation}
+            \Delta E = E_{\text{before}} - E_{\text{after}} = \sum_{\braket{j}}(-s_i)s_j - \sum_{\braket{j}}s_is_j = -2\sum_{\braket{j}}s_is_j. \label{spin_flip_energy_delta}
+        \end{equation}
+        We then have 2 cases. If $\Delta E \le 0$, we flip the spin orientation. If $\Delta E \ge 0$, we accept the flip with probability $p = e^{\frac{\Delta E}{T_r}}$. In order to do this, we sample a random variable $X \sim Unif(0, 1)$ and check $X < p$, in which case we accept the flip and leave the spin unflipped otherwise.\\
+        We knwo that for values of the reduced temperature below the critical temperature i.e. $T_r < T_c$ the system gets to an equilibrium state where the absolute value of the averege magnetisation goes to 1\cite{Blundell2010}.
+        \subsection{Determining parameters for final simulation}
         \todo{Explain how we arrived at simulation parameters}
     
 
@@ -166,29 +182,13 @@ Theory.
         \todo{Compare our results with theoreticla values}
 
 \section{Conclusions}\label{conclusions}
-Conclusion.
+Conclusion. 
 % Summarize the final results and answer the research question. Reflect on the strength and impact of your conclusion.
 % In principle no new information or arguments are presented in the conclusion.
 
 
 \bibliographystyle{unsrt}
 \addcontentsline{toc}{section}{Bibliography}
-%\bibliography{bibliography}            % *.bib Files
-
-%Add bbl file
-\begin{thebibliography}{10}
-
-\bibitem{chen_JAP_2003}
-F.~Chen, M.C. Cheung, P.M. Sweeney, W.D. Kirkey, M.~Furis, and A.N. Cartwright.
-%\newblock Ultrafast differential transmission spectroscopy of excitonic
-%  transitions in {I}n{G}a{N}/{G}a{N} multiple quantum wells.
-\newblock J. Appl. Phys. \textbf{93}, 4933 (2003).
-
-% You can add and cite as many new bibitems as you want; make sure to give them a unique and reccognizable name.
-
-\end{thebibliography}
-
+\bibliography{bibliography}
 
 \end{document}
-%
-% ****** End of file ******
