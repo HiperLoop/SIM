@@ -11,6 +11,7 @@ import pytz
 from numba import jit
 from scipy.integrate import cumulative_trapezoid
 from scipy.interpolate import interp1d
+from scipy.optimize import curve_fit
 
 # Multithreading initialisations
 stop_event = threading.Event()
@@ -19,27 +20,27 @@ worker = None
 DATA_PATH: str = "./data"                           # Default: ""       # Relative path to folder for data saving
 FIGURE_PATH: str = "./figures"                      # Default: ""       # Relative path to foler for figure saving
 SAVE_DATA: bool = True                              # Default: False    # Whether to save data at the end
-SAVE_FIGURE: bool = True                            # Default: False    # Whether to save the figure at the end
+SAVE_FIGURES: bool = True                           # Default: True    # Whether to save the figure at the end
 DEBUG_MODE: bool = False                            # Default: False    # Whether intermediate values are printed into the terminal
 
-RANDOMNESS_SEED: int | None = 17                    # Default: 5        # Seed for randomness to get reproducable results
+RANDOMNESS_SEED: int | None = 17                    # Default: 17        # Seed for randomness to get reproducable results
 
 LATTICE_SIDE_SIZE: int = 50                         # Default: 50       # In the instructions refered to as n, the spin lattice is of size n*n
 INITIAL_DOWN_PROBABILITY: float = 0.5               # Default: 0.5      # Probability that any given spin in the initial configuration is spin down
 
-START_TEMPERATURE: float = 1.5                      # Default: 2.0      # Lower temperature limit for the sweep over temperatures
-END_TEMPERATURE: float = 3                          # Default: 2.5      # Upper temperature limit for the sweep over temperatures
-TEMPERATURE_STEPS: int = 76                         # Default: 111      # Number of temperature values to simualte
+START_TEMPERATURE: float = 1.5                      # Default: 1.5      # Lower temperature limit for the sweep over temperatures
+END_TEMPERATURE: float = 3                          # Default: 3        # Upper temperature limit for the sweep over temperatures
+TEMPERATURE_STEPS: int = 76                         # Default: 76       # Number of temperature values to simualte
 
-# Default: 1        # Distribution of temperature values
+# Default: 1        # Distribution of temperature values so that there are more values in the middle then on the clear sides
 TEMPERATURE_DISTRIBUTION = lambda x: 10*np.exp(-((x - ((START_TEMPERATURE + END_TEMPERATURE)/2))**2)/(0.25))
 
 SIMULATION_BATCH_COUNT: int = 6                     # Default: 4        # Number of simulation batches to perform per temperature
 BATCH_CPU_CORE_LIMIT: int = 7                       # Default: None     # Limit the number of CPU cores to a specified number
 
-SIMULATION_SWEEP_COUNT: int = 1500                  # Default: 1300     # Number of sweeps to perform in all simulations. Values are collected at the end of every sweep
+SIMULATION_SWEEP_COUNT: int = 1500                  # Default: 1500     # Number of sweeps to perform in all simulations. Values are collected at the end of every sweep
 EQUILIBRATION_SWEEP_COUNT: int = 1000               # Default: 1000     # Number of sweeps during which data is not collected to give the system time to reach equilibrium
-ITERATIONS_PER_SWEEP: int = 27000                   # Default: 10000    # Number of spin-flip-attempts per sweep
+ITERATIONS_PER_SWEEP: int = 27000                   # Default: 27000    # Number of spin-flip-attempts per sweep
 
 simulation_parameters = [
     TEMPERATURE_STEPS,                    
@@ -56,7 +57,7 @@ simulation_parameters = [
     DATA_PATH,
     FIGURE_PATH,
     SAVE_DATA,
-    SAVE_FIGURE,
+    SAVE_FIGURES,
     DEBUG_MODE
 ]
 # Added the names as strings so that we can put the parameters in the csv files
@@ -75,7 +76,7 @@ simulation_parameter_names = [
     "DATA_PATH",
     "FIGURE_PATH",
     "SAVE_DATA",
-    "SAVE_FIGURE",
+    "SAVE_FIGURES",
 ]
 
 def generate_temperature_grid(pdf_func, low, high, num_points):
@@ -186,7 +187,7 @@ def run_simulation_task(args):
     """Worker function top-level wrapper for multiprocessing."""
     return simulation(*args)
 
-def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | None, down_probability: float, sweeps: int, burn_in_sweeps: int, temp_range: np.ndarray, temp_function, n: int, iterations: int, rand_seed: int | None, DATA_PATH: str, FIGURE_PATH: str, SAVE_DATA: bool, SAVE_FIGURE: bool, DEBUG_MODE: bool):
+def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | None, down_probability: float, sweeps: int, burn_in_sweeps: int, temp_range: np.ndarray, temp_function, n: int, iterations: int, rand_seed: int | None, DATA_PATH: str, FIGURE_PATH: str, SAVE_DATA: bool, SAVE_FIGURES: bool, DEBUG_MODE: bool):
     '''Function that sweeps across temperature range given by temp_range and performs a metasimulation with batch_count * # available cores simulations.
     It then displayes the values of averagre absolute magnetisation and heat capacity for the reduced temperature values.'''
     start_time = time.perf_counter()
@@ -263,23 +264,47 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
 
     # Plot relevant quantities and save to a figure if this is set to true at the top
     timestamp = datetime.datetime.now(pytz.timezone('Europe/Amsterdam')).strftime('%Y-%m-%d_%H-%M-%S')
-    if SAVE_FIGURE:
+    if SAVE_FIGURES:
         os.makedirs(FIGURE_PATH, exist_ok=True)
-        figure_path = os.path.join(FIGURE_PATH, f'{timestamp}.png')
 
-        plt.subplot(121)
-        plt.plot(temps, m_data)
-        plt.title("Absolute magnetisation over reduced temperature")
-        plt.xlabel("Reduced temperature")
-        plt.ylabel("Absolute magnetisation")
+        #First Plot: Plotting the average magnetization and the Heat Capacity over the reduced Temperatures
+        figure_path1 = os.path.join(FIGURE_PATH, f'MagCap-{timestamp}.svg')
+        
+        fig, axs = plt.subplots(2, figsize=(6.4, 8))
+        axs[0].plot(temps, m_data)
+        axs[1].plot(temps, C_data)
+        axs[0].set_title("Absolute magnetisation over reduced temperature")
+        axs[1].set_title("Heat capacity over reduced temperature")
+        axs[0].set_xlabel("Reduced temperature")
+        axs[1].set_xlabel("Reduced temperature")
+        axs[0].set_ylabel("Absolute magnetization")
+        axs[1].set_ylabel("Heat capacity")
+        fig.tight_layout()
+        plt.savefig(figure_path1)
+        plt.close()
 
-        plt.subplot(122)
-        plt.plot(temps, C_data)
-        plt.title("Heat capacity over reduced temperature")
-        plt.xlabel("Reduced temperature")
-        plt.ylabel("Heat capacity")
-        plt.savefig(figure_path)
-        if DEBUG_MODE: plt.show()
+        #Second Plot: Fitting the magnetizations with an Arctan to find the critical value
+        figure_path2 = os.path.join(FIGURE_PATH, f'Fit-{timestamp}.svg')
+
+        def objectiveArctan(x,a,b):
+            return(-1*np.arctan(a*(x-b))/np.pi+0.5)
+            # Divide by pi and add 0.5 to have the function limited between 0 and 1
+        
+        x, y = temps, m_data
+        # curve fit
+        popt, _ = curve_fit(objectiveArctan, x, y)
+        # summarize the parameter values
+        a, b = popt
+        # plot input vs output
+        plt.scatter(x, y)
+        # define a sequence of inputs between the smallest and largest known inputs
+        x_line = np.linspace(np.min(x), np.max(x), 500)
+        # calculate the output for the range
+        y_line = objectiveArctan(x_line, a, b)
+        # create a line plot for the mapping function
+        plt.plot(x_line, y_line, '--', color='red')
+        plt.title(f'Calculated Value {b}')
+        plt.savefig(figure_path2)
         plt.close()
 
     minute_sim_time: float = (time.perf_counter() - start_time) / 60
