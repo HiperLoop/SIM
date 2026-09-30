@@ -19,10 +19,34 @@
 \definecolor{codepurple}{rgb}{0.58,0,0.82}
 \definecolor{backcolour}{rgb}{0.95,0.95,0.92}
 
+\newcommand{\projectauthors}{Bela F. Brunner (8002193), Adam Zich (0074187)}
+\newcommand{\projectdate}{\today}
+\newcommand{\maketitlepage}{
+    \begin{titlepage}
+        \centering
+        
+        \vspace*{0.2\textheight}
+
+        {\Huge\bfseries Determining critical phase transition temperature in an Ising model simulation\par}
+        \vspace{2cm}
+
+        {\Large \projectauthors\par}
+        \vspace{2cm}
+
+        {\large \projectdate\par}
+
+        \vfill
+    \end{titlepage}
+}
+
+\newcommand{\todo}[1]{
+    \textbf{TODO: $<$#1$>$}
+}
+
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \lhead{NS-204B - Statystische fysica theorie en experiment}
-\rhead{Bela F. Brunner (8002193), Adam Zich (0074187)}
+\rhead{\projectauthors}
 \fancyfoot{}
 \fancyfoot[R]{Page \thepage /\pageref{LastPage}}
 
@@ -100,16 +124,34 @@
 \lstset{style=mystyle}
 
 \begin{document}
-\begin{center}
- \LARGE{\bfseries{ Project Article }}
- \line(1,0){430}
-\end{center}
+    \maketitlepage
+
     \tableofcontents
+
+    \newpage
     \section{Abstract}
+        \todo{Write abstract}
     \section{Introduction}
+        \subsection{Aim of study}
+            In this article we look at determining at what temperature does the Ising model undergo a phase transition.
+        \subsection{The Ising model}
+            \todo{Description of the Ising model}
     \section{Methodology}
+        \subsection{Metropolis algorithm}
+            \todo{Explain metropolis algorithm}
+        \subsection{Determining parameters for final simulation}
+            \todo{Explain how we arrived at simulation parameters}
     \section{Results}
+        \todo{Give results}\\
+        \todo{Give figures of results}
     \section{Comparison to theory}
+        \subsection{Theoretical solution for the critical phase transition temperature}
+            \todo{Give derivation of critical temperature in the Ising model}
+        \subsection{Comparison of theory and our results}
+            \todo{Compare our results with theoreticla values}
     \section{Conclusion}
+        \todo{Conclude that our simulated values are close to theoretical vlaues}\\
+        \todo{Give potential improvements on methodology}
     \section{Appendix}
+        \todo{Paste code}
 \end{document}
