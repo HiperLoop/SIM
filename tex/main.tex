@@ -14,7 +14,7 @@
 \usepackage{xcolor}
 \usepackage{graphicx}
 \usepackage{dcolumn}
-\usepackage{hyperref}
+\usepackage[hidelinks]{hyperref}
 \usepackage{bm}
 \usepackage[utf8]{inputenc}
 
@@ -120,28 +120,21 @@ Utrecht University}
 Utrecht University}
 
 \date{\today}
-% It is always \today, today,
-% but any date may be explicitly specified
 
 \begin{abstract}
-
-Room for abstract.
-
+    \todo{Abstract}
 \end{abstract}
 
 \maketitle
 
 \section{Introduction}\label{intro}
     \subsection{The Ising model}
-        The Ising model named after the German physicist Erns Ising is a model in statistical mechanics. The model consists of discrete magnetic spin dipole moments that take values $\pm 1$ ("up" and "down" respectively) arranged on a lattice. For the purposes of our simulation we used a square lattice. The spins interact with neighbouring spins. The model exhibits phase transitions that can be associated with the gas-liquid transition or spontaneous magnetisation.
+        The Ising model named after the physicist Erns Ising is a model in statistical mechanics. The model consists of discrete magnetic spin dipole moments that take values $\pm 1$ ("up" and "down" respectively) arranged on a lattice. For the purposes of our simulation we used a square lattice. The spins interact with only a subset of all the spins that are "close", we call this subset the neighbouring spins. It is known that this model exhibits phase transitions that can be associated with the gas-liquid transition or spontaneous magnetisation\cite{Blundell2010}.
     \subsection{Aim of study}
-        In this article we look at determining at what temperature does the Ising model undergo a phase transition. It is know from theory that under a certain critical temperature the model stabilises into completely up or down state. Conversely, above this critical, on average, the model remains a random mixture of up and down spins.
+        In this article we look at determining at what temperature does the Ising model undergo a phase transition. It is know from theory that under a certain critical temperature the model stabilises into completely up or down state. Conversely, above this critical, on average, the model remains a random mixture of up and down spins. We then try to experimentally try to determine the value of this critical temperature.
     
 \section{Theory}\label{theory}
-    The theoretical value of the critical temperature was predicted by Lars Onsager\cite{Onsager1944} to be
-    \begin{equation}
-        T_c = \frac{2}{\ln(1 + \sqrt{2})}. \label{critical_temperature}
-    \end{equation}
+    In the Ising model, the lattice spin elements take the values $s_i = \pm 1$.
     The interaction energy between two spins is given by
     \begin{equation}
         E_{\text{int}} = -Js_is_j,
@@ -152,6 +145,45 @@ Room for abstract.
     \begin{equation}
         E_r = \sum_{\braket{j}}s_is_j, \label{neighbour_interaction_energy}
     \end{equation}
+    The total amount of energy of the whole spin lattice is given by the sum over all pairwise interaction energies. This is then denoted as
+    \begin{equation}
+        E_{\text{sys}} = -J\sum_{\braket{i, j}}s_is_j,
+    \end{equation}
+    where the sum over $i, j$ counts every pair only once with $(i, j) \equiv (j, i)$. The reduced system energy is then given by
+    \begin{equation}
+        E_{\text{sys-red}} = \frac{E_{\text{sys}}}{J} = -\sum_{\braket{i, j}}s_is_j, \label{reduced_system_energy}
+    \end{equation}
+    We then define another dimensionless quantity, the reduced temperature as
+    \begin{equation}
+        T_r = \frac{k_BT}{J}, \label{reduced_temperature}
+    \end{equation}
+    where $T$ is the physical temperature, $k_B$ is the Boltzman's constant and $J$ the coupling constant. We then only work in terms of this reduced temperature and give no physical values of $T$ or $J$.\\
+    The theoretical value of the critical reduced temperature was predicted by Lars Onsager to be
+    \begin{equation}
+        T_c = \frac{1}{H_c} = \frac{1}{\frac{1}{2}\ln(\cot(\frac{\pi}{8}))} = \frac{2}{\ln(1 + \sqrt{2})}, \label{critical_temperature}
+    \end{equation}
+    where $H = J_r$ is the reduced coupling constant and $H_c$ is the critical coupling constant\cite{Onsager1944}.\\
+    Later, in 1952, Yang Chen-Ning showed that the function of absolute value of average magnetisation as a fucnction of reduced temperature is given by
+    \begin{equation}
+        |\braket{m}|(T_r) = \left[\frac{1 + x^2}{(1 - x^2)^2}(1 - 6x^2 + x^4)^{\frac{1}{2}}\right]^{\frac{1}{4}}, \label{magnetisation_over_temperature}
+    \end{equation}
+    with $x = e^{-\frac{2}{T_r}}$\cite{Yang1952}.\\
+    The heat capacity of the Ising model is given by
+    \begin{equation}
+        C = k_B\beta^2(\braket{E^2} - \braket{E}^2),
+    \end{equation}
+    where $\beta = \frac{1}{k_BT}$\cite{Blundell2010}. We can modify to equation to get an expression for the heat capacity in terms of the reduced energy $E_r$ and reduced temperature $T_r$ as
+    \begin{align*}
+        C &= k_B\beta^2(\braket{E^2} - \braket{E}^2),\\
+        &= k_B\frac{1}{k_B^2T^2}(\braket{E^2} - \braket{E}^2),\\
+        &= k_B\frac{1}{J^2T_r^2}(\braket{E^2} - \braket{E}^2),\\
+        &= k_B\frac{1}{\cancel{J^2}T_r^2}\cancel{J^2}(\braket{E_r^2} - \braket{E_r}^2),\\
+        &= k_B\frac{(\braket{E_r^2} - \braket{E_r}^2)}{T_r^2}.
+    \end{align*}
+    We define the dimensionless reduced heat capacity as
+    \begin{equation}
+        C_r = \frac{C}{k_B} = \frac{(\braket{E_r^2} - \braket{E_r}^2)}{T_r^2}. \label{reduced_heat_capacity}
+    \end{equation}
 
 \section{Methodology}
     \subsection{Metropolis algorithm}
@@ -160,12 +192,14 @@ Room for abstract.
             \Delta E = E_{\text{before}} - E_{\text{after}} = \sum_{\braket{j}}(-s_i)s_j - \sum_{\braket{j}}s_is_j = -2\sum_{\braket{j}}s_is_j. \label{spin_flip_energy_delta}
         \end{equation}
         We then have 2 cases. If $\Delta E \le 0$, we flip the spin orientation. If $\Delta E \ge 0$, we accept the flip with probability $p = e^{\frac{\Delta E}{T_r}}$. In order to do this, we sample a random variable $X \sim Unif(0, 1)$ and check $X < p$, in which case we accept the flip and leave the spin unflipped otherwise.\\
-        We know that for values of the reduced temperature below the critical temperature i.e. $T_r < T_c$ the system gets to an equilibrium state where the absolute value of the averege magnetisation goes to 1\cite{Blundell2010}. This however takes a certain amout of spin-flip attempts before the equilibrium is reached. To calculate the average quantities $|\braket{m}|$ and $C$ we then wait for a certain amout of spin-flip attempts before gathering values then used to calculate these quantities to give the model enough time to reach equilibrium.
+        We know that for values of the reduced temperature below the critical temperature i.e. $T_r < T_c$ the system gets to an equilibrium state where the absolute value of the averege magnetisation goes to 1\cite{Blundell2010}. This however takes a certain amout of spin-flip attempts before the equilibrium is reached. To calculate the average quantities $|\braket{m}|$ and $C_r$ we then wait for a certain amout of spin-flip attempts before gathering values then used to calculate these quantities to give the model enough time to reach equilibrium.
         \subsection{Determining parameters for final simulation}
             For the simulation that produced Figure \ref{fig:results} we had a number of requirements. The first requirements was for the simulation that produces the figure we use in this article to take no longer than 20 minutes to run. This meant that we had to look for simulation parameters that produce good data but for the simulation runtime to stay within the time bound.\\
             We already knew from test simulations that the critical temperature was somewhere in the range $1 < T_c < 3$ as we ran simualtion for $T_r = 1.5$ and $T_r = 3$ and observed the behvaiour associated with reduced temperatures being lower and higher than the critical temperature respectively. This then set the range of reduced temperatures that we were going to simulate.\\
-            We then continued to choosing a size of the lattice that we want to simulate as this, we found, had impact on the number of spin-flip attempts needed for the model to reach equilibrium. We decided to use $n = 50$ as for values of $n<20$ we found that the equilibrium was disturbed to a gread degree by the non-zero value of the temperature causing fluctuations in the spins.\\
-            We then ran multiple simulations trying to ascertain the number of spin-flip attempts needed for the $50 \cross 50$ lattice to reach equilibrium for the temperature range we wanted to study.
+            We then continued to choosing a size of the lattice that we want to simulate as this, we found, had impact on the number of spin-flip attempts needed for the model to reach equilibrium. We decided to use $n = 50$ as for values of $n<20$ we found that the equilibrium was disturbed to a great degree by the non-zero value of the temperature causing fluctuations in the spins.\\
+            We then ran multiple simulations trying to ascertain the number of spin-flip attempts needed for the $50 \cross 50$ lattice to reach equilibrium for the temperature range we wanted to study. We found that the configuration that took the most amounts of spin-flip attempts to reach equilibrium was the one with the lowest temperature, namely $T_r = 1.5$. We decided on the number $k = 27'000'000$ for the amount of spin-flip attempts to wait before collecting values of the system energy and magnetisation for the average megnetisation and heat capacity calculations.\\
+            We then collect 500 of these quantities to average, one every 27'000 spin-flip attempts.\\
+            Finally, we tried to run as many individual simualtions for every temperature value we were interested in, while also doing the simulations for a decent enough number of different temperature values to get a good resolution in our final results. We decided to do 42 simulations for each of 43 differet temperature values.
 
 % Note that the method section about a simulation differs from a setup and method section of a physical experiment.
 
