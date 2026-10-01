@@ -30,7 +30,7 @@ INITIAL_DOWN_PROBABILITY: float = 0.5               # Default: 0.5      # Probab
 
 START_TEMPERATURE: float = 2                        # Default: 1.5      # Lower temperature limit for the sweep over temperatures
 END_TEMPERATURE: float = 2.6                        # Default: 3        # Upper temperature limit for the sweep over temperatures
-TEMPERATURE_STEPS: int = 43                         # Default: 43       # Number of temperature values to simualte
+TEMPERATURE_STEPS: int = 65                         # Default: 43       # Number of temperature values to simualte
 
 # Default: 1        # Distribution of temperature values so that there are more values in the middle then on the clear sides
 TEMPERATURE_DISTRIBUTION = lambda x: 10*np.exp(-((x - ((START_TEMPERATURE + END_TEMPERATURE)/2))**2)/(0.25))
@@ -38,7 +38,7 @@ TEMPERATURE_DISTRIBUTION = lambda x: 10*np.exp(-((x - ((START_TEMPERATURE + END_
 SIMULATION_BATCH_COUNT: int = 6                     # Default: 6        # Number of simulation batches to perform per temperature
 BATCH_CPU_CORE_LIMIT: int = 7                       # Default: 7        # Limit the number of CPU cores to a specified number
 
-SIMULATION_SWEEP_COUNT: int = 1500                  # Default: 1500     # Number of sweeps to perform in all simulations. Values are collected at the end of every sweep
+SIMULATION_SWEEP_COUNT: int = 1700                  # Default: 1500     # Number of sweeps to perform in all simulations. Values are collected at the end of every sweep
 EQUILIBRATION_SWEEP_COUNT: int = 1000               # Default: 1000     # Number of sweeps during which data is not collected to give the system time to reach equilibrium
 ITERATIONS_PER_SWEEP: int = 27000                   # Default: 27000    # Number of spin-flip-attempts per sweep
 
@@ -282,10 +282,14 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
 
         #First Plot: Plotting the average magnetization and the Heat Capacity over the reduced Temperatures
         figure_path1 = os.path.join(FIGURE_PATH, f'MagCap-{timestamp}.svg')
+
+        critical_temp_from_C = np.argmax(C_data)
         
         fig, axs = plt.subplots(2, figsize=(6.4, 8))
         axs[0].errorbar(temps, m_data, yerr=m_std, fmt='-', capsize=3)
+        axs[0].axvline(temps[critical_temp_from_C], fmt='--', color='r')
         axs[1].errorbar(temps, C_data, yerr=C_std, fmt='-', capsize=3)
+        axs[1].axvline(temps[critical_temp_from_C], fmt='--', color='r')
         axs[0].set_title("Absolute magnetisation over reduced temperature")
         axs[1].set_title("Heat capacity over reduced temperature")
         axs[0].set_xlabel("Reduced temperature")
@@ -303,20 +307,28 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
             return(-1*np.arctan(a*(x-b))/np.pi+0.5)
             # Divide by pi and add 0.5 to have the function limited between 0 and 1
         
+        def trueMagnetisationFunction(T):
+            x: np.ndarray = np.exp(-2/T)
+            sq: np.ndarray = 1 - 6*x**2 + x**4
+            sq[sq < 0.0] = 0.0
+            return (((1 + x**2)/((1 - x**2)**2))*((sq)**(1/2)))**(1/4)
+
         x, y = temps, m_data
         # curve fit
         popt, _ = curve_fit(objectiveArctan, x, y)
         # summarize the parameter values
         a, b = popt
         # plot input vs output
-        plt.errorbar(x, y, yerr=m_std, fmt='o', capsize=3)
+        plt.errorbar(x, y, yerr=m_std, fmt='o', capsize=3, label="Simulation values")
         # define a sequence of inputs between the smallest and largest known inputs
-        x_line = np.linspace(np.min(x), np.max(x), 500)
+        x_line = np.linspace(np.min(x), np.max(x), 5000)
         # calculate the output for the range
         y_line = objectiveArctan(x_line, a, b)
         # create a line plot for the mapping function
-        plt.plot(x_line, y_line, '--', color='red')
+        plt.plot(x_line, y_line, '--', color='red', label="Fitted function")
+        plt.plot(x_line, trueMagnetisationFunction(x_line), '-', color='black', label="True function")
         plt.title(f'Calculated Value {b}')
+        plt.legend()
         plt.savefig(figure_path2)
         plt.close()
 
