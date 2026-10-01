@@ -1,8 +1,10 @@
+import os
+
 import numpy as np
 import pandas as pd
 import scipy
-import os
 from matplotlib import pyplot as plt
+
 
 def read_simulation_csv(file_path: str) -> np.ndarray:
 	"""Read a simulation CSV and return its data as an array.
