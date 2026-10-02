@@ -28,3 +28,29 @@
         \todo{Conclude that our simulated values are close to theoretical vlaues}\\
         \todo{Give potential improvements on methodology}
 \end{document}
+
+# Legacy alternative fit kept for reference only.
+        # figure_path2 = os.path.join(FIGURE_PATH, f'Fit-{timestamp}.svg')
+        #
+        # def objectiveArctan(x, a, b):
+        #     return (-1 * np.arctan(a * (x - b)) / np.pi + 0.5)
+        #
+        # def trueMagnetisationFunction(T):
+        #     x: np.ndarray = np.exp(-2 / T)
+        #     sq: np.ndarray = 1 - 6 * x**2 + x**4
+        #     sq[sq < 0.0] = 0.0
+        #     return (((1 + x**2) / ((1 - x**2)**2)) * ((sq) ** (1 / 2))) ** (1 / 4)
+        #
+        # x, y = temps, m_data
+        # popt, _ = curve_fit(objectiveArctan, x, y)
+        # a, b = popt
+        # x_line = np.linspace(np.min(x), np.max(x), 5000)
+        # y_line = objectiveArctan(x_line, a, b)
+        #
+        # plt.errorbar(x, y, yerr=m_std, fmt='o', capsize=3, label='Simulation values')
+        # plt.plot(x_line, y_line, '--', color='red', label='Fitted function')
+        # plt.plot(x_line, trueMagnetisationFunction(x_line), '-', color='black', label='True function')
+        # plt.title(f'Calculated Value {b}')
+        # plt.legend()
+        # plt.savefig(figure_path2)
+        # plt.close()
