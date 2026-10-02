@@ -194,8 +194,8 @@ def C_fit(T, A, Tc, w, B):
     """Fit function for the Heat capacity"""
     return B - A * np.log(np.sqrt((T - Tc) ** 2 + w ** 2))
 
-def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | None, down_probability: float, sweeps: int, burn_in_sweeps: int, temp_range: np.ndarray, temp_function, n: int, iterations: int, rand_seed: int | None, DATA_PATH: str, FIGURE_PATH: str, SAVE_DATA: bool, SAVE_FIGURES: bool, DEBUG_MODE: bool):
-    '''Function that sweeps across temperature range given by temp_range and performs a metasimulation with batch_count * # available cores simulations.
+def meta_simulation(value_count: int, batch_count: int,  core_limit: int | None, down_probability: float, sweeps: int, burn_in_sweeps: int, temp_range: np.ndarray, temp_function, n: int, iterations: int, rand_seed: int | None, DATA_PATH: str, FIGURE_PATH: str, SAVE_DATA: bool, SAVE_FIGURES: bool, DEBUG_MODE: bool):
+    '''Function that sweeps across temperature range given by temp_range and performs a multi-simulation with batch_count * # available cores simulations.
     It then displayes the values of averagre absolute magnetisation and heat capacity for the reduced temperature values.'''
     start_time = time.perf_counter()
     m_data: np.ndarray = np.zeros(value_count)
@@ -393,7 +393,7 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
 def main():
     '''Main function that runs the simulations.'''
     print("Simulation started")
-    meta_meta_simulation(*simulation_parameters)
+    meta_simulation(*simulation_parameters)
     print("Simulation ended")
 
 if __name__=="__main__":
