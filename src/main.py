@@ -314,10 +314,10 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
         fig, axs = plt.subplots(2, figsize=(6.4, 8))
         axs[0].errorbar(temps, m_data, yerr=m_std, fmt='-', capsize=3)
         if np.isfinite(critical_temp_from_C):
-            axs[0].axvline(critical_temp_from_C, linestyle='--', color='r')
+            axs[0].axvline(critical_temp_from_C, linestyle='--', color='g')
         axs[1].errorbar(temps, C_data, yerr=C_std, fmt='-', capsize=3)
         if np.isfinite(critical_temp_from_C):
-            axs[1].axvline(critical_temp_from_C, linestyle='--', color='r')
+            axs[1].axvline(critical_temp_from_C, linestyle='--', color='g')
 
         text = (
             f"T_c = {critical_temp_fit_value:.4f} ± {critical_temp_fit_uncertainty:.4f}\n"
@@ -333,6 +333,13 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
             bbox=dict(boxstyle='round,pad=0.35', facecolor='white', alpha=0.8),
         )
 
+        def trueMagnetisationFunction(T):
+             x: np.ndarray = np.exp(-2 / T)
+             sq: np.ndarray = 1 - 6 * x**2 + x**4
+             sq[sq < 0.0] = 0.0
+             return (((1 + x**2) / ((1 - x**2)**2)) * ((sq) ** (1 / 2))) ** (1 / 4)
+
+        axs[0].plot(temps, trueMagnetisationFunction(temps), '-', color='black', label='True function')
         axs[0].set_title("Absolute magnetisation over reduced temperature")
         axs[1].set_title("Heat capacity over reduced temperature")
         axs[0].set_xlabel("Reduced temperature")
