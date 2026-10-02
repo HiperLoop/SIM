@@ -122,7 +122,7 @@ Utrecht University}
 \date{\today}
 
 \begin{abstract}
-    In this article, we attempted to determine the critical temperature for phase transitions in the infinite 2D Ising model. We used a Monte Carlo approach with the Metropolis algorithm. We then use the value of heat capacity of the model to determine the value of the critical temperature as at the critical temperature, the heat capacity function exhibits a singularity where it goes to infinity\cite{Onsager1944}. We first determined upper and lower bound for the critical temperature using small simulations where we look at the heat capacity and determined whether the chosen value of temperature corresponds to a heat capacity above or below that of the critical temperature. We then ran a comprehensive multi-simulation over the predetermined temperature interval to find the critical temperature value. We obtained a value of $<value>$, with the theoretical value given by $T_c = \frac{2}{\ln(1 + \sqrt{2})} \approx 2.269$. We encountered a limitation of the finite-size approximation of the infinite lattice, which should be adressed in further research.
+    In this article, we attempted to determine the critical temperature for phase transitions in the infinite 2D Ising model. We used a Monte Carlo approach with the Metropolis algorithm. We then use the value of heat capacity of the model to determine the value of the critical temperature as at the critical temperature, the heat capacity function exhibits a singularity where it goes to infinity\cite{Onsager1944}. We first determined upper and lower bound for the critical temperature using small simulations where we look at the heat capacity and determined whether the chosen value of temperature corresponds to a heat capacity above or below that of the critical temperature. We then ran a comprehensive multi-simulation over the predetermined temperature interval to find the critical temperature value. We obtained a value of $T_c = 2.2834 \pm 0.0009$, with the theoretical value given by $T_c = \frac{2}{\ln(1 + \sqrt{2})} \approx 2.269$. We encountered a limitation of the finite-size approximation of the infinite lattice, which should be adressed in further research.
 \end{abstract}
 
 \maketitle
@@ -245,6 +245,7 @@ Utrecht University}
         \caption{Plots of average absolute magnetisation and heat capacity over the reduced temperature showing also the true function for magnetisation given by Eq. (\ref{magnetisation_over_temperature}) and the calculated value of $T_c$.}
         \label{fig:m_and_C}
     \end{figure}
+    \vspace{-0.5cm}
     The results of the heat capacity fit for parameters
     \begin{align*}
         &n \cross n = 50 \cross 50,\\
@@ -256,14 +257,17 @@ Utrecht University}
         &\#\text{sweeps after equilibration} = 10000,
     \end{align*}
     are shown in Figure \ref{fig:fit}. In Figure \ref{fig:m_and_C} we can then see where the calculated critical temperature lies on the magnetisation and heat capacity plots.
-    
-\section{Discussion}
 
-    We were able to determine the critical temperature of the Ising model using a Monte Carlo simulation with the Metropolis algorithm. Our results show that the critical temperature is approximately $T_r = <TODO>$, which is in good agreement with the theoretical value of $T_c = \frac{2}{\ln(1 + \sqrt{2})} \approx 2.269$. The graphical representation of the results clearly illustrates the behavior of the system as it approaches the critical temperature, with the heat capacity diverging and the average magnetization dropping to zero. Nevertheless, the low uncertainties in combination with the high reduced chi-squared value of the fit indicate that we overestimated the uncertainties. 
+    \vspace{-0.3cm}
+\section{Discussion}
+    \vspace{-0.3cm}
+    We were able to determine the critical temperature of the Ising model using a Monte Carlo simulation with the Metropolis algorithm. Our results show that the critical temperature is approximately $T_c = 2.2834 \pm 0.0009$, which is in good agreement with the theoretical value of $T_c = \frac{2}{\ln(1 + \sqrt{2})} \approx 2.269$. The graphical representation of the results clearly illustrates the behavior of the system as it approaches the critical temperature, with the heat capacity diverging and the average magnetization dropping to zero. Nevertheless, the low uncertainties in combination with the high reduced chi-squared value of the fit indicate that we overestimated the uncertainties. 
 
     The difference between theoretical and experimental values of the critical temperature as well as the uncertainties might however not be due to a simulation error. We can see in the graphical representation that the heat-capacity peak is broader than the prediction for an infinite lattice. This can most likely be attributed to the finite size of the lattice used in the simulation. In a finite system, the phase transition is not as sharp as in an infinite system, leading to a rounding of the heat capacity peak and a shift in the critical temperature. This is also being discussed by M.Yu. Malsagov, I.M. Karandashev and B.V. Kryzhanovsky\cite{Malsagov2017}, who propose to add a correction term to the heat capacity formula, which reduces the systematic error of the finite lattice approximation. The result of this inaccuracy is that the critical temperature we determined from our simulation is slightly lower than the theoretical value as well as that the uncertainties are underestimated. This is consistent with the expectation that finite-size effects lead to a shift in the critical temperature.\\
 
+\vspace{-1cm}
 \section{Conclusions}\label{conclusions}
+\vspace{-0.3cm}
     The simulation captures the qualitative behavior of the Ising model near its phase transition, but the estimated critical temperature differs from the theoretical value. Future work could improve this estimate by increasing the number of simulations, comparing alternative fitting functions and independent estimates from magnetisation, and testing different lattice sizes. The finite-size correction to the heat-capacity formula proposed by Malsagov, Karandashev, and Kryzhanovsky may also reduce systematic error; for a $50 \cross 50$ lattice, they report a discrepancy below the statistical error of the Monte Carlo simulation\cite{Malsagov2017}.
     % Summarize the final results and answer the research question. Reflect on the strength and impact of your conclusion.
     % In principle no new information or arguments are presented in the conclusion.
@@ -271,6 +275,7 @@ Utrecht University}
 
 \bibliographystyle{unsrt}
 \addcontentsline{toc}{section}{Bibliography}
+\vspace{-0.3cm}
 \bibliography{bibliography}
 
 \end{document}
