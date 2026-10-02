@@ -191,13 +191,6 @@ def C_fit(T, A, Tc, w, B):
     """Fit function for the Heat capacity"""
     return B - A * np.log(np.sqrt((T - Tc) ** 2 + w ** 2))
 
-def get_critical_temp(m_data, temps):
-    m_diffs = m_data[1:] - m_data[:-1]
-    temp_diffs = temps[1:] - temps[:-1]
-    derivatives = m_diffs/temp_diffs
-    min_index = np.argmin(derivatives)
-    return (temps[min_index + 1] + temps[min_index]) / 2
-
 def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | None, down_probability: float, sweeps: int, burn_in_sweeps: int, temp_range: np.ndarray, temp_function, n: int, iterations: int, rand_seed: int | None, DATA_PATH: str, FIGURE_PATH: str, SAVE_DATA: bool, SAVE_FIGURES: bool, DEBUG_MODE: bool):
     '''Function that sweeps across temperature range given by temp_range and performs a metasimulation with batch_count * # available cores simulations.
     It then displayes the values of averagre absolute magnetisation and heat capacity for the reduced temperature values.'''
@@ -280,8 +273,8 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
                 m_data[temp_idx][sim_idx] = m
                 C_data[temp_idx][sim_idx] = C
             
-            m_std = np.nanstd(m_data, axis=1, ddof=1) 
-            C_std = np.nanstd(C_data, axis=1, ddof=1) 
+            m_std = np.nanstd(m_data, axis=1, ddof=1) / np.sqrt(total_sims)
+            C_std = np.nanstd(C_data, axis=1, ddof=1) / np.sqrt(total_sims)
             m_data=np.nanmean(m_data,1)
             C_data=np.nanmean(C_data,1)
 
@@ -360,7 +353,6 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
         label = f"Heat-capacity fit (chi^2/dof = {chi2_dof:.2f})"
         plt.plot(x_fit_line, y_fit_line, ':', color='green', linewidth=2, label=label)
         plt.axvline(popt_C[1], linestyle=':', color='green', alpha=0.8)
-        plt.axvline(get_critical_temp(m_data, temps), ls=':', color='g', label="Critical temperature")
         
         plt.legend()
         plt.savefig(figure_path2)
