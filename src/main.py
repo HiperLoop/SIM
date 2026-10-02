@@ -30,15 +30,15 @@ INITIAL_DOWN_PROBABILITY: float = 0.5               # Default: 0.5      # Probab
 
 START_TEMPERATURE: float = 2                        # Default: 1.5      # Lower temperature limit for the sweep over temperatures
 END_TEMPERATURE: float = 2.6                        # Default: 3        # Upper temperature limit for the sweep over temperatures
-TEMPERATURE_STEPS: int = 21                         # Default: 43       # Number of temperature values to simualte
+TEMPERATURE_STEPS: int = 6                         # Default: 43       # Number of temperature values to simualte
 
 # Default: 1        # Distribution of temperature values so that there are more values in the middle then on the clear sides
 TEMPERATURE_DISTRIBUTION = lambda x: 10*np.exp(-((x - ((START_TEMPERATURE + END_TEMPERATURE)/2))**2)/(0.25))
 
-SIMULATION_BATCH_COUNT: int = 3                     # Default: 6        # Number of simulation batches to perform per temperature
+SIMULATION_BATCH_COUNT: int = 2                     # Default: 6        # Number of simulation batches to perform per temperature
 BATCH_CPU_CORE_LIMIT: int = 14                       # Default: 7        # Limit the number of CPU cores to a specified number
 
-SIMULATION_SWEEP_COUNT: int = 1600                  # Default: 1500     # Number of sweeps to perform in all simulations. Values are collected at the end of every sweep
+SIMULATION_SWEEP_COUNT: int = 3000                  # Default: 1500     # Number of sweeps to perform in all simulations. Values are collected at the end of every sweep
 EQUILIBRATION_SWEEP_COUNT: int = 1000               # Default: 1000     # Number of sweeps during which data is not collected to give the system time to reach equilibrium
 ITERATIONS_PER_SWEEP: int = 100000                   # Default: 27000    # Number of spin-flip-attempts per sweep
 
@@ -187,6 +187,13 @@ def run_simulation_task(args):
     """Worker function top-level wrapper for multiprocessing."""
     return simulation(*args)
 
+def get_critical_temp(m_data, temps):
+    m_diffs = m_data[1:] - m_data[:-1]
+    temp_diffs = temps[1:] - temps[:-1]
+    derivatives = m_diffs/temp_diffs
+    min_index = np.argmin(derivatives)
+    return (temps[min_index + 1] + temps[min_index]) / 2
+
 def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | None, down_probability: float, sweeps: int, burn_in_sweeps: int, temp_range: np.ndarray, temp_function, n: int, iterations: int, rand_seed: int | None, DATA_PATH: str, FIGURE_PATH: str, SAVE_DATA: bool, SAVE_FIGURES: bool, DEBUG_MODE: bool):
     '''Function that sweeps across temperature range given by temp_range and performs a metasimulation with batch_count * # available cores simulations.
     It then displayes the values of averagre absolute magnetisation and heat capacity for the reduced temperature values.'''
@@ -327,6 +334,7 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
         # create a line plot for the mapping function
         plt.plot(x_line, y_line, '--', color='red', label="Fitted function")
         plt.plot(x_line, trueMagnetisationFunction(x_line), '-', color='black', label="True function")
+        plt.axvline(get_critical_temp(m_data, temps), ls=':', color='g', label="Critical temperature")
         plt.title(f'Calculated Value {b}')
         plt.legend()
         plt.savefig(figure_path2)
