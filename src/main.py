@@ -30,7 +30,7 @@ INITIAL_DOWN_PROBABILITY: float = 0.5               # Default: 0.5      # Probab
 
 START_TEMPERATURE: float = 2                        # Default: 1.5      # Lower temperature limit for the sweep over temperatures
 END_TEMPERATURE: float = 2.6                        # Default: 3        # Upper temperature limit for the sweep over temperatures
-TEMPERATURE_STEPS: int = 60                         # Default: 43       # Number of temperature values to simualte
+TEMPERATURE_STEPS: int = 62                         # Default: 43       # Number of temperature values to simualte
 
 # Default: 1        # Distribution of temperature values so that there are more values in the middle then on the clear sides
 TEMPERATURE_DISTRIBUTION = lambda x: 10*np.exp(-((x - ((START_TEMPERATURE + END_TEMPERATURE)/2))**2)/(0.25))
@@ -305,12 +305,12 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
         figure_path1 = os.path.join(FIGURE_PATH, f'MagCap-{timestamp}.svg')
 
         fig, axs = plt.subplots(2, figsize=(6.4, 8))
-        axs[0].errorbar(temps, m_data, yerr=m_std, fmt='-', capsize=3)
+        axs[0].errorbar(temps, m_data, yerr=m_std, fmt='-', capsize=3, label="Data points")
         if np.isfinite(critical_temp_from_C):
-            axs[0].axvline(critical_temp_from_C, linestyle='--', color='g')
-        axs[1].errorbar(temps, C_data, yerr=C_std, fmt='-', capsize=3)
+            axs[0].axvline(critical_temp_from_C, linestyle='--', color='g', label="T_c")
+        axs[1].errorbar(temps, C_data, yerr=C_std, fmt='-', capsize=3, label="Data points")
         if np.isfinite(critical_temp_from_C):
-            axs[1].axvline(critical_temp_from_C, linestyle='--', color='g')
+            axs[1].axvline(critical_temp_from_C, linestyle='--', color='g', label="T_c")
 
         text = (
             f"T_c = {critical_temp_fit_value:.4f} ± {critical_temp_fit_uncertainty:.4f}\n"
@@ -339,6 +339,8 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
         axs[1].set_xlabel("Reduced temperature")
         axs[0].set_ylabel("Absolute magnetization")
         axs[1].set_ylabel("Heat capacity")
+        axs[0].legend()
+        axs[1].legend()
         fig.tight_layout()
         plt.savefig(figure_path1)
         plt.close()
