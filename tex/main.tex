@@ -129,9 +129,9 @@ Utrecht University}
 
 \section{Introduction}\label{intro}
     \subsection{The Ising model}
-        The Ising model named after the physicist Erns Ising is a model in statistical mechanics. The model consists of discrete magnetic spin dipole moments that take values $\pm 1$ ("up" and "down" respectively) arranged on a lattice. For the purposes of our simulation we used a square lattice. The spins interact with only a subset of all the spins that are "close", we call this subset the neighbouring spins. It is known that this model exhibits phase transitions that can be associated with the gas-liquid transition or spontaneous magnetisation. \cite{Blundell2010}[341]
+        The Ising model named after the physicist Erns Ising is a model in statistical mechanics. The model consists of discrete magnetic spin dipole moments that take values $\pm 1$ ("up" and "down" respectively) arranged on a lattice. For the purposes of our simulation we used a square lattice. The spins interact with only a subset of all the spins that are "close", we call this subset the neighbouring spins. It is known that this model exhibits phase transitions that can be associated with the gas-liquid transition or spontaneous magnetisation. \cite{Blundell2010}
     \subsection{Aim of study}
-        In this article we look at determining at what temperature does the Ising model undergo a phase transition. It is know from theory that below a certain critical temperature and after sufficient amounts of time, the model stabilises into completely up or down state. Conversely, above this critical, on average, the model remains a random mixture of up and down spins. \cite{Blundell2010}[341]
+        In this article we look at determining at what temperature does the Ising model undergo a phase transition. It is know from theory that below a certain critical temperature and after sufficient amounts of time, the model stabilises into completely up or down state. Conversely, above this critical, on average, the model remains a random mixture of up and down spins. \cite{Blundell2010}
         We will try to determine this value by simulating the Ising model for different temperatures, differentiate between ordered and random results, and determine the critical value at which the phase transition happens.
     
 \section{Theory}\label{theory}
@@ -145,10 +145,6 @@ Utrecht University}
     The reduced interaction energy with the $j$ nearest neighbours is then
     \begin{equation}
         E_r = \sum_{\braket{j}}s_is_j, \label{neighbour_interaction_energy}
-    \end{equation}
-    The energy difference between the current spin at some position and the energy after the spin has been flipped is given by
-    \begin{equation}
-            \Delta E = E_{\text{before}} - E_{\text{after}} = \sum_{\braket{j}}(-s_i)s_j - \sum_{\braket{j}}s_is_j = -2\sum_{\braket{j}}s_is_j. \label{spin_flip_energy_delta}
     \end{equation}
     The total amount of energy of the whole spin lattice is given by the sum over all pairwise interaction energies. This is then denoted as
     \begin{equation}
@@ -193,12 +189,21 @@ Utrecht University}
 
 \section{Methodology}
     \subsection{Metropolis algorithm}
-        To simulate the evolution of the Ising model we use a Monte Carlo simulation using the Metropolis algorithm. In our implementation we consider the von Neumann neighbourgood of only 4 neighbouring spins in the $\pm x$ and $\pm y$ directions. We also use a periodic boundary condition such that if we denote by $n \cross n$ the size of the lattice, we have that the spin at position $(n, i)$ is a neighbor of spin at postion $(1, i)$ and in the same way also spin at $i, n$ is neighbouring the spin at $(i, 1)$. At each iteration of the algorithm a random position is chosen in the square lattice of spins. The energy needed to flip the spin form the up to the down state or vice versa is then calculated from Eq. (\ref{spin_flip_energy_delta}).
+        To simulate the evolution of the Ising model we use a Monte Carlo simulation using the Metropolis algorithm. In our implementation we consider the von Neumann neighbourgood of only 4 neighbouring spins in the $\pm x$ and $\pm y$ directions. We also use a periodic boundary condition such that if we denote by $n \cross n$ the size of the lattice, we have that the spin at position $(n, i)$ is a neighbor of spin at postion $(1, i)$ and in the same way also spin at $i, n$ is neighbouring the spin at $(i, 1)$. At each iteration of the algorithm a random position is chosen in the square lattice of spins. The energy needed to flip the spin form the up to the down state or vice versa is then calculated from Eq. (\ref{neighbour_interaction_energy}) as
+        \begin{equation}
+            \Delta E = E_{\text{before}} - E_{\text{after}} = \sum_{\braket{j}}(-s_i)s_j - \sum_{\braket{j}}s_is_j = -2\sum_{\braket{j}}s_is_j. \label{spin_flip_energy_delta}
+        \end{equation}
         We then have 2 cases. If $\Delta E \le 0$, we flip the spin orientation. If $\Delta E \ge 0$, we accept the flip with probability $p = e^{\frac{\Delta E}{T_r}}$. In order to do this, we sample a random variable $X \sim Unif(0, 1)$ and check $X < p$, in which case we accept the flip and leave the spin unflipped otherwise.\\
         Theory tells us that for values of the reduced temperature below the critical temperature i.e. $T_r < T_c$ after sufficient spin-flip attempts, the system gets to an equilibrium state where all the spins are either up or down and therefore the absolute value of the averege magnetisation goes to 1\cite{Blundell2010}. 
         To calculate the average quantities $|\braket{m}|$ and $C_r$ we then wait for a certain amout of spin-flip attempts before starting to calculate them, so that we measure the equilibrium of the model.
         \subsection{Determining the Critical Temperature}
-            To determine the critical temperature, we can 
+            To determine the critical temperature, there are a few options. As given in the theory, the two major events happening at this temperature is the switch of the absolute value of the average magnetization from 1 to 0, and the spike in the heat capacity. Since we are still working with some randomness, we decided that it would technically be easier to find the peak of the heat capacity. 
+            In our simulation setup, we are not finding a lot of temperatures, but we are running a lot of simulations for each temperature. This means that we do not want to use a peak finding algorithm, but rather fit a function to the data and find the maximum of that function. We decided to use the following fitting function for the heat capacity:
+            \begin{equation}
+                C_r(T_r) = B - A \cdot  \log\left(\sqrt{((T - T_c)^2 + w^2)}\right), \label{heat_capacity_fit_function}
+            \end{equation} 
+            We are usign the logarithm of the distance to the critical temperature, since we know that the heat capacity diverges at the critical temperature. The parameter $w$ is a small number that prevents the logarithm from diverging. The parameters $A$ and $B$ are used to scale and shift the function to fit the data.
+            This is implemented in the code as a function that takes the parameters $A, B, T_c, w$ and the temperature $T_r$ and returns the value of the heat capacity at that temperature. We then use the scipy package to fit this function to the data we have collected. The parameters $A, B, T_c, w$ are then optimized to minimize the difference between the function and the data. The parameter $T_c$ is then the critical temperature we are looking for. The peak of this function then gives us the critical temperature, which we can then compare to the theoretical value given in Eq. (\ref{critical_temperature}).
         \subsection{Determining parameters for final simulation}
             For the simulation that produced Figure \ref{fig:results} we had a number of requirements. The first requirements was for the simulation that produces the figure we use in this article to take no longer than 20 minutes to run. This meant that we had to look for simulation parameters that produce good data but for the simulation runtime to stay within the time bound.\\
             We already knew from test simulations that the critical temperature was somewhere in the range $1 < T_c < 3$ as we ran simualtion for $T_r = 1.5$ and $T_r = 3$ and observed the behvaiour associated with reduced temperatures being lower and higher than the critical temperature respectively. This then set the range of reduced temperatures that we were going to simulate.\\
@@ -207,6 +212,9 @@ Utrecht University}
             We then collect 500 of these quantities to average, one every 27'000 spin-flip attempts.\\
             Finally, we tried to run as many individual simualtions for every temperature value we were interested in, while also doing the simulations for a decent enough number of different temperature values to get a good resolution in our final results. We decided to do 42 simulations for each of 43 differet temperature values.
 
+        \subsection{Uncertainties}
+            The uncertainties in our results are calculated using the standard deviation of the mean. We calculate the standard deviation of the values we collected for the average magnetisation and heat capacity over the 49 simulations per temperature value. This gives us an estimate of the uncertainty in our results.\\
+            We also have to consider the uncertainty in our fitting function. We use the scipy package to fit our function to the data, and it provides us with an estimate of the uncertainty in the fitted parameters. We can then use this to estimate the uncertainty in our critical temperature value that is working with the uncertainties of the fit.
 % Note that the method section about a simulation differs from a setup and method section of a physical experiment.
 
 % The goal of the method section is to decribe the procedure of the experiment in such a way that a reader could reproduce the experiment (either to verify your results, or to build future research on your findings). This goal remains the same.
@@ -229,7 +237,8 @@ Utrecht University}
     \todo{Compare our results with theoreticla values}
 
 \section{Conclusions}\label{conclusions}
-Conclusion. 
+We were able to determine the critical temperature of the Ising model using a Monte Carlo simulation with the Metropolis algorithm. Our results show that the critical temperature is approximately $T_r = <TODO>$, which is in good agreement with the theoretical value of $T_c = \frac{2}{\ln(1 + \sqrt{2})} \approx 2.269$. The graphical representation of the results clearly illustrates the behavior of the system as it approaches the critical temperature, with the heat capacity diverging and the average magnetization dropping to zero. Nevertheless, the high uncertainties in combination with the low reduced chi-squared value of the fit indicate that we overestimated the uncertainties. This could be due to a number of factors, including the limited number of simulations and the choice of fitting function. Further research could explore different fitting functions or increase the number of simulations to improve the accuracy of the results. Additionally, exploring different lattice sizes or boundary conditions could provide further insights into the behavior of the Ising model and its phase transitions. Another option would be combining different approaches for the critical temperature, such as looking at the average magnetisation or using a peak finding algorithm. This would then result in a more robust value for the critical temperature.\\
+Overall, our findings validate the theoretical predictions and demonstrate the effectiveness of Monte Carlo simulations in studying phase transitions in statistical mechanics. 
 % Summarize the final results and answer the research question. Reflect on the strength and impact of your conclusion.
 % In principle no new information or arguments are presented in the conclusion.
 
