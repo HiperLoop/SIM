@@ -13,10 +13,6 @@ from scipy.integrate import cumulative_trapezoid
 from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
 
-
-
-
-
 # Multithreading initialisations
 stop_event = threading.Event()
 worker = None
@@ -34,16 +30,16 @@ INITIAL_DOWN_PROBABILITY: float = 0.5               # Default: 0.5      # Probab
 
 START_TEMPERATURE: float = 2                        # Default: 1.5      # Lower temperature limit for the sweep over temperatures
 END_TEMPERATURE: float = 2.6                        # Default: 3        # Upper temperature limit for the sweep over temperatures
-TEMPERATURE_STEPS: int = 30                         # Default: 43       # Number of temperature values to simualte
+TEMPERATURE_STEPS: int = 63                         # Default: 43       # Number of temperature values to simualte
 
 # Default: 1        # Distribution of temperature values so that there are more values in the middle then on the clear sides
 TEMPERATURE_DISTRIBUTION = lambda x: 10*np.exp(-((x - ((START_TEMPERATURE + END_TEMPERATURE)/2))**2)/(0.25))
 
-SIMULATION_BATCH_COUNT: int = 6                     # Default: 6        # Number of simulation batches to perform per temperature
+SIMULATION_BATCH_COUNT: int = 7                     # Default: 6        # Number of simulation batches to perform per temperature
 BATCH_CPU_CORE_LIMIT: int = 7                       # Default: 7        # Limit the number of CPU cores to a specified number
 
-SIMULATION_SWEEP_COUNT: int = 10000                  # Default: 1700     # Number of sweeps to perform in all simulations. Values are collected at the end of every sweep
-EQUILIBRATION_SWEEP_COUNT: int = 2500               # Default: 1000     # Number of sweeps during which data is not collected to give the system time to reach equilibrium
+SIMULATION_SWEEP_COUNT: int = 15000                  # Default: 1700     # Number of sweeps to perform in all simulations. Values are collected at the end of every sweep
+EQUILIBRATION_SWEEP_COUNT: int = 5000               # Default: 1000     # Number of sweeps during which data is not collected to give the system time to reach equilibrium
 ITERATIONS_PER_SWEEP: int = 2500                   # Default: 27000    # Number of spin-flip-attempts per sweep
 
 simulation_parameters = [
