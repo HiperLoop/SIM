@@ -280,8 +280,8 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
                 m_data[temp_idx][sim_idx] = m
                 C_data[temp_idx][sim_idx] = C
             
-            m_std = np.nanstd(m_data, axis=1, ddof=1) / np.sqrt(total_sims)
-            C_std = np.nanstd(C_data, axis=1, ddof=1) / np.sqrt(total_sims)
+            m_std = np.nanstd(m_data, axis=1, ddof=1) 
+            C_std = np.nanstd(C_data, axis=1, ddof=1) 
             m_data=np.nanmean(m_data,1)
             C_data=np.nanmean(C_data,1)
 
