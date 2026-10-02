@@ -1,0 +1,25 @@
+# ================================================================================================
+# This file contains the simulated magnetisation and heat capacity per reduced temperature.
+# The simualtion ran for 1.9776765616649452 minutes.
+# Simulation parameters:
+# TEMPERATURE_STEPS = 3
+# SIMULATION_BATCH_COUNT = 6
+# BATCH_CPU_CORE_LIMIT = 7
+# INITIAL_DOWN_PROBABILITY = 0.5
+# SIMULATION_SWEEP_COUNT = 1800
+# EQUILIBRATION_SWEEP_COUNT = 1000
+# TEMPERATURE_RANGE = array([2. , 2.6])
+# TEMPERATURE_DISTRIBUTION = <function <lambda> at 0x000001DA1D083740>
+# LATTICE_SIDE_SIZE = 100
+# ITERATIONS_PER_SWEEP = 50000
+# RANDOMNESS_SEED = 17
+# DATA_PATH = './data'
+# FIGURE_PATH = './figures'
+# SAVE_DATA = True
+# SAVE_FIGURES = True
+# ================================================================================================
+#
+temps,abs_magnetisation,std_m,Heat Capacity,std_C
+2.0,0.6252049880952382,0.3663486809162065,8452.226252682507,4451.652384335298
+2.299999999999999,0.30747733333333344,0.13564725925206614,17890.231082231185,3203.393534737311
+2.6,0.007034559523809524,0.004958385457151852,7041.263002077803,348.02328804584465

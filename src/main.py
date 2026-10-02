@@ -25,22 +25,22 @@ DEBUG_MODE: bool = False                            # Default: False    # Whethe
 
 RANDOMNESS_SEED: int | None = 17                    # Default: 17       # Seed for randomness to get reproducable results
 
-LATTICE_SIDE_SIZE: int = 50                         # Default: 50       # In the instructions refered to as n, the spin lattice is of size n*n
+LATTICE_SIDE_SIZE: int = 100                         # Default: 50       # In the instructions refered to as n, the spin lattice is of size n*n
 INITIAL_DOWN_PROBABILITY: float = 0.5               # Default: 0.5      # Probability that any given spin in the initial configuration is spin down
 
 START_TEMPERATURE: float = 2                        # Default: 1.5      # Lower temperature limit for the sweep over temperatures
 END_TEMPERATURE: float = 2.6                        # Default: 3        # Upper temperature limit for the sweep over temperatures
-TEMPERATURE_STEPS: int = 65                         # Default: 43       # Number of temperature values to simualte
+TEMPERATURE_STEPS: int = 21                         # Default: 43       # Number of temperature values to simualte
 
 # Default: 1        # Distribution of temperature values so that there are more values in the middle then on the clear sides
 TEMPERATURE_DISTRIBUTION = lambda x: 10*np.exp(-((x - ((START_TEMPERATURE + END_TEMPERATURE)/2))**2)/(0.25))
 
-SIMULATION_BATCH_COUNT: int = 6                     # Default: 6        # Number of simulation batches to perform per temperature
-BATCH_CPU_CORE_LIMIT: int = 7                       # Default: 7        # Limit the number of CPU cores to a specified number
+SIMULATION_BATCH_COUNT: int = 3                     # Default: 6        # Number of simulation batches to perform per temperature
+BATCH_CPU_CORE_LIMIT: int = 14                       # Default: 7        # Limit the number of CPU cores to a specified number
 
-SIMULATION_SWEEP_COUNT: int = 1700                  # Default: 1500     # Number of sweeps to perform in all simulations. Values are collected at the end of every sweep
+SIMULATION_SWEEP_COUNT: int = 1600                  # Default: 1500     # Number of sweeps to perform in all simulations. Values are collected at the end of every sweep
 EQUILIBRATION_SWEEP_COUNT: int = 1000               # Default: 1000     # Number of sweeps during which data is not collected to give the system time to reach equilibrium
-ITERATIONS_PER_SWEEP: int = 27000                   # Default: 27000    # Number of spin-flip-attempts per sweep
+ITERATIONS_PER_SWEEP: int = 100000                   # Default: 27000    # Number of spin-flip-attempts per sweep
 
 simulation_parameters = [
     TEMPERATURE_STEPS,                    
@@ -287,9 +287,9 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
         
         fig, axs = plt.subplots(2, figsize=(6.4, 8))
         axs[0].errorbar(temps, m_data, yerr=m_std, fmt='-', capsize=3)
-        axs[0].axvline(temps[critical_temp_from_C], fmt='--', color='r')
+        axs[0].axvline(temps[critical_temp_from_C], ls='--', color='r')
         axs[1].errorbar(temps, C_data, yerr=C_std, fmt='-', capsize=3)
-        axs[1].axvline(temps[critical_temp_from_C], fmt='--', color='r')
+        axs[1].axvline(temps[critical_temp_from_C], ls='--', color='r')
         axs[0].set_title("Absolute magnetisation over reduced temperature")
         axs[1].set_title("Heat capacity over reduced temperature")
         axs[0].set_xlabel("Reduced temperature")
