@@ -23,24 +23,24 @@ SAVE_DATA: bool = True                              # Default: False    # Whethe
 SAVE_FIGURES: bool = True                           # Default: True     # Whether to save the figure at the end
 DEBUG_MODE: bool = False                            # Default: False    # Whether intermediate values are printed into the terminal
 
-RANDOMNESS_SEED: int | None = 10                    # Default: 17       # Seed for randomness to get reproducable results
+RANDOMNESS_SEED: int | None = 10                    # Default: 10       # Seed for randomness to get reproducable results
 
 LATTICE_SIDE_SIZE: int = 50                         # Default: 50       # In the instructions refered to as n, the spin lattice is of size n*n
 INITIAL_DOWN_PROBABILITY: float = 0.5               # Default: 0.5      # Probability that any given spin in the initial configuration is spin down
 
-START_TEMPERATURE: float = 2                        # Default: 1.5      # Lower temperature limit for the sweep over temperatures
-END_TEMPERATURE: float = 2.6                        # Default: 3        # Upper temperature limit for the sweep over temperatures
-TEMPERATURE_STEPS: int = 62                         # Default: 43       # Number of temperature values to simualte
+START_TEMPERATURE: float = 2                        # Default: 2        # Lower temperature limit for the sweep over temperatures
+END_TEMPERATURE: float = 2.6                        # Default: 2.6      # Upper temperature limit for the sweep over temperatures
+TEMPERATURE_STEPS: int = 62                         # Default: 62       # Number of temperature values to simualte
 
-# Default: 1        # Distribution of temperature values so that there are more values in the middle then on the clear sides
+# Default: 10*np.exp(-((x - ((START_TEMPERATURE + END_TEMPERATURE)/2))**2)/(0.25))        # Distribution of temperature values so that there are more values in the middle then on the clear sides
 TEMPERATURE_DISTRIBUTION = lambda x: 10*np.exp(-((x - ((START_TEMPERATURE + END_TEMPERATURE)/2))**2)/(0.25))
 
-SIMULATION_BATCH_COUNT: int = 7                     # Default: 6        # Number of simulation batches to perform per temperature
+SIMULATION_BATCH_COUNT: int = 7                     # Default: 7        # Number of simulation batches to perform per temperature
 BATCH_CPU_CORE_LIMIT: int = 7                       # Default: 7        # Limit the number of CPU cores to a specified number
 
-SIMULATION_SWEEP_COUNT: int = 15000                  # Default: 1700     # Number of sweeps to perform in all simulations. Values are collected at the end of every sweep
-EQUILIBRATION_SWEEP_COUNT: int = 5000               # Default: 1000     # Number of sweeps during which data is not collected to give the system time to reach equilibrium
-ITERATIONS_PER_SWEEP: int = 2500                   # Default: 27000    # Number of spin-flip-attempts per sweep
+SIMULATION_SWEEP_COUNT: int = 15000                 # Default: 15000    # Number of sweeps to perform in all simulations. Values are collected at the end of every sweep
+EQUILIBRATION_SWEEP_COUNT: int = 5000               # Default: 5000     # Number of sweeps during which data is not collected to give the system time to reach equilibrium
+ITERATIONS_PER_SWEEP: int = 2500                    # Default: 2500     # Number of spin-flip-attempts per sweep
 
 simulation_parameters = [
     TEMPERATURE_STEPS,                    
@@ -60,6 +60,7 @@ simulation_parameters = [
     SAVE_FIGURES,
     DEBUG_MODE
 ]
+
 # Added the names as strings so that we can put the parameters in the csv files
 simulation_parameter_names = [
     "TEMPERATURE_STEPS",
@@ -80,6 +81,8 @@ simulation_parameter_names = [
 ]
 
 def generate_temperature_grid(pdf_func, low, high, num_points):
+    '''Function that generates a distribution of temperatures based on the probability
+    density function pdf_func.'''
     x_eval = np.linspace(low, high, 10000, endpoint=True)
     y_eval = pdf_func(x_eval)
     
@@ -93,7 +96,7 @@ def generate_temperature_grid(pdf_func, low, high, num_points):
     return inverse_cdf(u_uniform)
 
 def show_spins(spin_matrix: np.ndarray):
-    '''Function to display the spin matrix as a rectangular field with colours corresponding to spin values'''
+    '''Function to display the spin matrix as a rectangular field with colours corresponding to spin values.'''
     plt.imshow(spin_matrix)
     plt.show()
 
@@ -268,11 +271,11 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
                 temp_idx = task_idx // total_sims
                 sim_idx = task_idx % total_sims
                 m, _, C = future.result()
-                
-                # Aggregate directly into the data arrays without blocking the rest of the queue
+
                 m_data[temp_idx][sim_idx] = m
                 C_data[temp_idx][sim_idx] = C
-            
+
+            # Compute errors and then reduce data to means
             m_std = np.nanstd(m_data, axis=1, ddof=1) / np.sqrt(total_sims)
             C_std = np.nanstd(C_data, axis=1, ddof=1) / np.sqrt(total_sims)
             m_data=np.nanmean(m_data,1)
@@ -359,32 +362,6 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
         plt.legend()
         plt.savefig(figure_path2)
         plt.close()
-
-        # Legacy alternative fit kept for reference only.
-        # figure_path2 = os.path.join(FIGURE_PATH, f'Fit-{timestamp}.svg')
-        #
-        # def objectiveArctan(x, a, b):
-        #     return (-1 * np.arctan(a * (x - b)) / np.pi + 0.5)
-        #
-        # def trueMagnetisationFunction(T):
-        #     x: np.ndarray = np.exp(-2 / T)
-        #     sq: np.ndarray = 1 - 6 * x**2 + x**4
-        #     sq[sq < 0.0] = 0.0
-        #     return (((1 + x**2) / ((1 - x**2)**2)) * ((sq) ** (1 / 2))) ** (1 / 4)
-        #
-        # x, y = temps, m_data
-        # popt, _ = curve_fit(objectiveArctan, x, y)
-        # a, b = popt
-        # x_line = np.linspace(np.min(x), np.max(x), 5000)
-        # y_line = objectiveArctan(x_line, a, b)
-        #
-        # plt.errorbar(x, y, yerr=m_std, fmt='o', capsize=3, label='Simulation values')
-        # plt.plot(x_line, y_line, '--', color='red', label='Fitted function')
-        # plt.plot(x_line, trueMagnetisationFunction(x_line), '-', color='black', label='True function')
-        # plt.title(f'Calculated Value {b}')
-        # plt.legend()
-        # plt.savefig(figure_path2)
-        # plt.close()
 
     minute_sim_time: float = (time.perf_counter() - start_time) / 60
     if DEBUG_MODE: print(f'The whole simulation took {minute_sim_time:.2f} minutes.')
