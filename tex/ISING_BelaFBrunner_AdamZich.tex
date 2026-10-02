@@ -210,10 +210,10 @@ Utrecht University}
             This is implemented in the code as a function that takes the parameters $A, B, T_c, w$ and the temperature $T_r$ and returns the value of the heat capacity at that temperature. We then use the scipy package to fit this function to the data we have collected. The parameters $A, B, T_c, w$ are then optimized to minimize the difference between the function and the data. The parameter $T_c$ is then the critical temperature we are looking for. The peak of this function then gives us the critical temperature, which we can then compare to the theoretical value given in Eq. (\ref{critical_temperature}).
         \subsection{Determining parameters for final simulation}
             For the simulation that produced Figure \ref{fig:results} we had a number of requirements. The first requirements was for the simulation that produces the figure we use in this article to take no longer than 20 minutes to run. This meant that we had to look for simulation parameters that produce good data but for the simulation runtime to stay within the time bound.\\
-            We already knew from test simulations that the critical temperature was somewhere in the range $1 < T_c < 3$ as we ran simualtion for $T_r = 1.5$ and $T_r = 3$ and observed the behvaiour associated with reduced temperatures being lower and higher than the critical temperature respectively. This then set the range of reduced temperatures that we were going to simulate.\\
+            We already knew from test simulations that the critical temperature was somewhere in the range $2 < T_c < 2.6$ as we ran simualtion for $T_r = 2$ and $T_r = 2.6$ and observed the behvaiour associated with reduced temperatures being lower and higher than the critical temperature respectively. This then set the range of reduced temperatures that we were going to simulate.\\
             We then continued to choosing a size of the lattice that we want to simulate as this, we found, had impact on the number of spin-flip attempts needed for the model to reach equilibrium. We decided to use $n = 50$ as for values of $n<20$ we found that the equilibrium was disturbed to a great degree by the non-zero value of the temperature causing fluctuations in the spins.\\
-            We then ran multiple simulations trying to ascertain the number of spin-flip attempts needed for the $50 \cross 50$ lattice to reach equilibrium for the temperature range we wanted to study. We found that the configuration that took the most amounts of spin-flip attempts to reach equilibrium was the one with the lowest temperature, namely $T_r = 1.5$. We decided on the number $k = 27'000'000$ for the amount of spin-flip attempts to wait before collecting values of the system energy and magnetisation for the average megnetisation and heat capacity calculations.\\
-            We then collect 500 of these quantities to average, one every 27'000 spin-flip attempts.\\
+            We then ran multiple simulations trying to ascertain the number of spin-flip attempts needed for the $50 \cross 50$ lattice to reach equilibrium for the temperature range we wanted to study. We found that the configuration that took the most amounts of spin-flip attempts to reach equilibrium was the one with the lowest temperature, namely $T_r = 2$. We decided on the number $k = 12'500'000$ for the amount of spin-flip attempts to wait before collecting values of the system energy and magnetisation for the average megnetisation and heat capacity calculations.\\
+            We then collect 10000 of these quantities to average, one every 2'500 spin-flip attempts.\\
             Finally, we tried to run as many individual simualtions for every temperature value we were interested in, while also doing the simulations for a decent enough number of different temperature values to get a good resolution in our final results. We decided to do 42 simulations for each of 43 differet temperature values.
 
         \subsection{Uncertainties}
@@ -229,11 +229,21 @@ Utrecht University}
 
 \section{Results}\label{results}
     \begin{figure}[htbp]
-        \includegraphics[width=0.5\textwidth]{m_and_C_2.png}
-        \caption{Results}
+        \includegraphics[width=0.5\textwidth]{Fit-2026-10-02_23-17-56.svg}
+        \caption{Calculated heat capacity results and a fit through using functino in Eq. (\ref{fit_C}) with found value of critical temperature being $T_c = 2.2834 \pm 0.0009$.}
         \label{fig:results}
     \end{figure}
-    \todo{Give results}\\
+    The results of the heat capacity fit for parameters
+    \begin{align*}
+        &n \cross n = 50 \cross 50,\\
+        &\text{temperature range} = [2, 2.6],\\
+        &\#\text{temperatures} = 62,\\
+        &\#\text{simulations per temperature} = 49,\\
+        &\#\text{spin flip attempts per sweep} = 2500,\\
+        &\#\text{sweeps for equilibration} = 5000,\\
+        &\#\text{sweeps after equilibration} = 10000,
+    \end{align*}
+    are shown in Figure \ref
     \todo{Give figures of results}
     
 \section{Discussion}
@@ -241,8 +251,6 @@ Utrecht University}
     We were able to determine the critical temperature of the Ising model using a Monte Carlo simulation with the Metropolis algorithm. Our results show that the critical temperature is approximately $T_r = <TODO>$, which is in good agreement with the theoretical value of $T_c = \frac{2}{\ln(1 + \sqrt{2})} \approx 2.269$. The graphical representation of the results clearly illustrates the behavior of the system as it approaches the critical temperature, with the heat capacity diverging and the average magnetization dropping to zero. Nevertheless, the low uncertainties in combination with the high reduced chi-squared value of the fit indicate that we overestimated the uncertainties. 
 
     The difference between theoretical and experimental values of the critical temperature as well as the uncertainties might however not be due to a simulation error. We can see in the graphical representation that the heat-capacity peak is broader than the prediction for an infinite lattice. This can most likely be attributed to the finite size of the lattice used in the simulation. In a finite system, the phase transition is not as sharp as in an infinite system, leading to a rounding of the heat capacity peak and a shift in the critical temperature. This is also being discussed by M.Yu. Malsagov, I.M. Karandashev and B.V. Kryzhanovsky\cite{Malsagov2017}, who propose to add a correction term to the heat capacity formula, which reduces the systematic error of the finite lattice approximation. The result of this inaccuracy is that the critical temperature we determined from our simulation is slightly lower than the theoretical value as well as that the uncertainties are underestimated. This is consistent with the expectation that finite-size effects lead to a shift in the critical temperature.\\
-     
-    \todo{Compare our results with theoreticla values}
 
 \section{Conclusions}\label{conclusions}
     The simulation captures the qualitative behavior of the Ising model near its phase transition, but the estimated critical temperature differs from the theoretical value. Future work could improve this estimate by increasing the number of simulations, comparing alternative fitting functions and independent estimates from magnetisation, and testing different lattice sizes. The finite-size correction to the heat-capacity formula proposed by Malsagov, Karandashev, and Kryzhanovsky may also reduce systematic error; for a $50 \cross 50$ lattice, they report a discrepancy below the statistical error of the Monte Carlo simulation\cite{Malsagov2017}.
