@@ -13,6 +13,10 @@ from scipy.integrate import cumulative_trapezoid
 from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
 
+
+
+
+
 # Multithreading initialisations
 stop_event = threading.Event()
 worker = None
@@ -23,14 +27,14 @@ SAVE_DATA: bool = True                              # Default: False    # Whethe
 SAVE_FIGURES: bool = True                           # Default: True     # Whether to save the figure at the end
 DEBUG_MODE: bool = False                            # Default: False    # Whether intermediate values are printed into the terminal
 
-RANDOMNESS_SEED: int | None = 17                    # Default: 17       # Seed for randomness to get reproducable results
+RANDOMNESS_SEED: int | None = 10                    # Default: 17       # Seed for randomness to get reproducable results
 
 LATTICE_SIDE_SIZE: int = 100                         # Default: 50       # In the instructions refered to as n, the spin lattice is of size n*n
 INITIAL_DOWN_PROBABILITY: float = 0.5               # Default: 0.5      # Probability that any given spin in the initial configuration is spin down
 
 START_TEMPERATURE: float = 2                        # Default: 1.5      # Lower temperature limit for the sweep over temperatures
 END_TEMPERATURE: float = 2.6                        # Default: 3        # Upper temperature limit for the sweep over temperatures
-TEMPERATURE_STEPS: int = 6                         # Default: 43       # Number of temperature values to simualte
+TEMPERATURE_STEPS: int = 40                         # Default: 43       # Number of temperature values to simualte
 
 # Default: 1        # Distribution of temperature values so that there are more values in the middle then on the clear sides
 TEMPERATURE_DISTRIBUTION = lambda x: 10*np.exp(-((x - ((START_TEMPERATURE + END_TEMPERATURE)/2))**2)/(0.25))
@@ -38,7 +42,7 @@ TEMPERATURE_DISTRIBUTION = lambda x: 10*np.exp(-((x - ((START_TEMPERATURE + END_
 SIMULATION_BATCH_COUNT: int = 2                     # Default: 6        # Number of simulation batches to perform per temperature
 BATCH_CPU_CORE_LIMIT: int = 14                       # Default: 7        # Limit the number of CPU cores to a specified number
 
-SIMULATION_SWEEP_COUNT: int = 3000                  # Default: 1500     # Number of sweeps to perform in all simulations. Values are collected at the end of every sweep
+SIMULATION_SWEEP_COUNT: int = 1700                  # Default: 1700     # Number of sweeps to perform in all simulations. Values are collected at the end of every sweep
 EQUILIBRATION_SWEEP_COUNT: int = 1000               # Default: 1000     # Number of sweeps during which data is not collected to give the system time to reach equilibrium
 ITERATIONS_PER_SWEEP: int = 100000                   # Default: 27000    # Number of spin-flip-attempts per sweep
 
@@ -187,6 +191,10 @@ def run_simulation_task(args):
     """Worker function top-level wrapper for multiprocessing."""
     return simulation(*args)
 
+def C_fit(T, A, Tc, w, B):
+    """Fit function for the Heat capacity"""
+    return B - A * np.log(np.sqrt((T - Tc) ** 2 + w ** 2))
+
 def get_critical_temp(m_data, temps):
     m_diffs = m_data[1:] - m_data[:-1]
     temp_diffs = temps[1:] - temps[:-1]
@@ -247,8 +255,8 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
 
                 m_data[i] = np.nanmean(meta_agg_m)
                 C_data[i] = np.nanmean(meta_agg_C)
-                m_std[i] = np.nanstd(meta_agg_m)
-                C_std[i] = np.nanstd(meta_agg_C)
+                m_std[i] = np.nanstd(meta_agg_m)/ np.sqrt(total_sims)
+                C_std[i] = np.nanstd(meta_agg_C)/ np.sqrt(total_sims)
 
                 print(f' reduced temperature is: {temps[i]}')
                 print(f' average magnetisation is: {m_data[i]}')
@@ -284,19 +292,51 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
 
     # Plot relevant quantities and save to a figure if this is set to true at the top
     timestamp = datetime.datetime.now(pytz.timezone('Europe/Amsterdam')).strftime('%Y-%m-%d_%H-%M-%S')
+    T = temps
+    C = C_data
+    C_err = C_std
+
+    popt_C, pcov_C = curve_fit(         #Fit for the Heat capacity where Error bars are s
+        C_fit,
+        T,
+        C,
+        sigma=C_err,
+        absolute_sigma=False,
+        p0=[1000, 2.27, 0.02, 800],
+    )
+    chi2_dof = np.sum(((C - C_fit(T, *popt_C)) / C_err) ** 2) / (len(T) - 4)
+    critical_temp_fit_value = popt_C[1]
+    critical_temp_fit_uncertainty = np.sqrt(np.diag(pcov_C))[1]
+    critical_temp_from_C = critical_temp_fit_value
+
     if SAVE_FIGURES:
         os.makedirs(FIGURE_PATH, exist_ok=True)
 
         #First Plot: Plotting the average magnetization and the Heat Capacity over the reduced Temperatures
         figure_path1 = os.path.join(FIGURE_PATH, f'MagCap-{timestamp}.svg')
 
-        critical_temp_from_C = np.argmax(C_data)
-        
         fig, axs = plt.subplots(2, figsize=(6.4, 8))
         axs[0].errorbar(temps, m_data, yerr=m_std, fmt='-', capsize=3)
-        axs[0].axvline(temps[critical_temp_from_C], ls='--', color='r')
+        if np.isfinite(critical_temp_from_C):
+            axs[0].axvline(critical_temp_from_C, linestyle='--', color='r')
         axs[1].errorbar(temps, C_data, yerr=C_std, fmt='-', capsize=3)
-        axs[1].axvline(temps[critical_temp_from_C], ls='--', color='r')
+        if np.isfinite(critical_temp_from_C):
+            axs[1].axvline(critical_temp_from_C, linestyle='--', color='r')
+
+        text = (
+            f"T_c = {critical_temp_fit_value:.4f} ± {critical_temp_fit_uncertainty:.4f}\n"
+            f"chi^2/dof = {chi2_dof:.3f}"
+        )
+        axs[1].text(
+            0.02,
+            0.96,
+            text,
+            transform=axs[1].transAxes,
+            va='top',
+            ha='left',
+            bbox=dict(boxstyle='round,pad=0.35', facecolor='white', alpha=0.8),
+        )
+
         axs[0].set_title("Absolute magnetisation over reduced temperature")
         axs[1].set_title("Heat capacity over reduced temperature")
         axs[0].set_xlabel("Reduced temperature")
@@ -307,41 +347,50 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
         plt.savefig(figure_path1)
         plt.close()
 
-        #Second Plot: Fitting the magnetizations with an Arctan to find the critical value
+        # Second Plot: Show only the heat-capacity fit now in use.
         figure_path2 = os.path.join(FIGURE_PATH, f'Fit-{timestamp}.svg')
 
-        def objectiveArctan(x,a,b):
-            return(-1*np.arctan(a*(x-b))/np.pi+0.5)
-            # Divide by pi and add 0.5 to have the function limited between 0 and 1
-        
-        def trueMagnetisationFunction(T):
-            x: np.ndarray = np.exp(-2/T)
-            sq: np.ndarray = 1 - 6*x**2 + x**4
-            sq[sq < 0.0] = 0.0
-            return (((1 + x**2)/((1 - x**2)**2))*((sq)**(1/2)))**(1/4)
+        x_fit_line = np.linspace(T.min(), T.max(), 5000)
+        y_fit_line = C_fit(x_fit_line, *popt_C)
 
-        x, y = temps, m_data
-        # curve fit
-        popt, _ = curve_fit(objectiveArctan, x, y)
-        # summarize the parameter values
-        a, b = popt
-        # plot input vs output
-        plt.errorbar(x, y, yerr=m_std, fmt='o', capsize=3, label="Simulation values")
-        # define a sequence of inputs between the smallest and largest known inputs
-        x_line = np.linspace(np.min(x), np.max(x), 5000)
-        # calculate the output for the range
-        y_line = objectiveArctan(x_line, a, b)
-        # create a line plot for the mapping function
-        plt.plot(x_line, y_line, '--', color='red', label="Fitted function")
-        plt.plot(x_line, trueMagnetisationFunction(x_line), '-', color='black', label="True function")
+        plt.errorbar(T, C, yerr=C_err, fmt='o', capsize=3, label='Simulation values')
+        label = f"Heat-capacity fit (chi^2/dof = {chi2_dof:.2f})"
+        plt.plot(x_fit_line, y_fit_line, ':', color='green', linewidth=2, label=label)
+        plt.axvline(popt_C[1], linestyle=':', color='green', alpha=0.8)
         plt.axvline(get_critical_temp(m_data, temps), ls=':', color='g', label="Critical temperature")
-        plt.title(f'Calculated Value {b}')
+        
         plt.legend()
         plt.savefig(figure_path2)
         plt.close()
 
+        # Legacy alternative fit kept for reference only.
+        # figure_path2 = os.path.join(FIGURE_PATH, f'Fit-{timestamp}.svg')
+        #
+        # def objectiveArctan(x, a, b):
+        #     return (-1 * np.arctan(a * (x - b)) / np.pi + 0.5)
+        #
+        # def trueMagnetisationFunction(T):
+        #     x: np.ndarray = np.exp(-2 / T)
+        #     sq: np.ndarray = 1 - 6 * x**2 + x**4
+        #     sq[sq < 0.0] = 0.0
+        #     return (((1 + x**2) / ((1 - x**2)**2)) * ((sq) ** (1 / 2))) ** (1 / 4)
+        #
+        # x, y = temps, m_data
+        # popt, _ = curve_fit(objectiveArctan, x, y)
+        # a, b = popt
+        # x_line = np.linspace(np.min(x), np.max(x), 5000)
+        # y_line = objectiveArctan(x_line, a, b)
+        #
+        # plt.errorbar(x, y, yerr=m_std, fmt='o', capsize=3, label='Simulation values')
+        # plt.plot(x_line, y_line, '--', color='red', label='Fitted function')
+        # plt.plot(x_line, trueMagnetisationFunction(x_line), '-', color='black', label='True function')
+        # plt.title(f'Calculated Value {b}')
+        # plt.legend()
+        # plt.savefig(figure_path2)
+        # plt.close()
+
     minute_sim_time: float = (time.perf_counter() - start_time) / 60
-    if DEBUG_MODE: print(f'The whole simulation took {minute_sim_time} minutes.')
+    if DEBUG_MODE: print(f'The whole simulation took {minute_sim_time:.2f} minutes.')
     
     # Saves the data to a csv file if the responding value at the top is set to True. Name of the file is a timestamp
     if SAVE_DATA:
@@ -353,9 +402,10 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             csvfile.write("# ================================================================================================\n")
             csvfile.write("# This file contains the simulated magnetisation and heat capacity per reduced temperature.\n")
-            csvfile.write(f"# The simualtion ran for {minute_sim_time} minutes.\n")
+            csvfile.write(f"# The simualtion ran for {minute_sim_time:.2f} minutes.\n")
             csvfile.write("# Simulation parameters:\n")
             csvfile.writelines(f"# {name} = {value!r}\n" for name, value in zip(simulation_parameter_names, simulation_parameters))
+            csvfile.write(f"#Heat-capacity fit parameters: A={popt_C[0]:.6g}, T_c={popt_C[1]:.6g}, w={popt_C[2]:.6g}, B={popt_C[3]:.6g}, chi^2/dof={chi2_dof:.3f}\n")
             csvfile.write("# ================================================================================================\n")
             csvfile.write("#\n")
             writer.writeheader()
