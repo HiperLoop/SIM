@@ -201,6 +201,13 @@ Utrecht University}
         We then have 2 cases. If $\Delta E \le 0$, we flip the spin orientation. If $\Delta E \ge 0$, we accept the flip with probability $p = e^{\frac{\Delta E}{T_r}}$. In order to do this, we sample a random variable $X \sim Unif(0, 1)$ and check $X < p$, in which case we accept the flip and leave the spin unflipped otherwise.\\
         Theory tells us that for values of the reduced temperature below the critical temperature i.e. $T_r < T_c$ after sufficient spin-flip attempts, the system gets to an equilibrium state where all the spins are either up or down and therefore the absolute value of the averege magnetisation goes to 1\cite{Blundell2010}. 
         To calculate the average quantities $|\braket{m}|$ and $C_r$ we then wait for a certain amout of spin-flip attempts before starting to calculate them, so that we measure the equilibrium of the model.
+        The overall workflow of the simulation program is shown in Figure \ref{fig:program_workflow}.
+        \begin{figure}[htbp]
+            \centering
+            \includegraphics[width=0.3\textwidth]{\detokenize{Physics Lab.png}}
+            \caption{Scheme of the simulation program workflow.}
+            \label{fig:program_workflow}
+        \end{figure}
         \subsection{Determining the Critical Temperature}
             To determine the critical temperature, there are a few options. As given in the theory, the two major events happening at this temperature is the switch of the absolute value of the average magnetization from 1 to 0, and the spike in the heat capacity. Since we are still working with some randomness, we decided that it would technically be easier to find the peak of the heat capacity. 
             In our simulation setup, we are not finding a lot of temperatures, but we are running a lot of simulations for each temperature. This means that we do not want to use a peak finding algorithm, but rather fit a function to the data and find the maximum of that function. To determine the critical temperature, we use a fit function over the heat capacity. We use a modified version of Eq. (\ref{approx_C}), where we remove the singularity and end up with a finite peak. The formula is given by
