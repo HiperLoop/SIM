@@ -185,7 +185,11 @@ Utrecht University}
     \begin{equation}
         C_r = \frac{C}{k_B} = \frac{(\braket{E_r^2} - \braket{E_r}^2)}{T_r^2}. \label{reduced_heat_capacity}
     \end{equation}
-    The heat capacity 
+    We know that the heat capacity has a singularity at the critical temperature where it becomes infinite\cite{Onsager1944}.\\
+    An approximation of the heat capacity around the critical temperature is given by
+    \begin{equation}
+        C \approx B - A\ln(\sqrt{(T - T_c)^2}). \label{approx_C}
+    \end{equation}
 
 \section{Methodology}
     \subsection{Metropolis algorithm}
@@ -198,11 +202,10 @@ Utrecht University}
         To calculate the average quantities $|\braket{m}|$ and $C_r$ we then wait for a certain amout of spin-flip attempts before starting to calculate them, so that we measure the equilibrium of the model.
         \subsection{Determining the Critical Temperature}
             To determine the critical temperature, there are a few options. As given in the theory, the two major events happening at this temperature is the switch of the absolute value of the average magnetization from 1 to 0, and the spike in the heat capacity. Since we are still working with some randomness, we decided that it would technically be easier to find the peak of the heat capacity. 
-            In our simulation setup, we are not finding a lot of temperatures, but we are running a lot of simulations for each temperature. This means that we do not want to use a peak finding algorithm, but rather fit a function to the data and find the maximum of that function. We decided to use the following fitting function for the heat capacity:
+            In our simulation setup, we are not finding a lot of temperatures, but we are running a lot of simulations for each temperature. This means that we do not want to use a peak finding algorithm, but rather fit a function to the data and find the maximum of that function. To determine the critical temperature, we use a fit function over the heat capacity. We use a modified version of Eq. (\ref{approx_C}), where we remove the singularity and end up with a finite peak. The formula is given by
             \begin{equation}
-                C_r(T_r) = B - A \cdot  \log\left(\sqrt{((T - T_c)^2 + w^2)}\right), \label{heat_capacity_fit_function}
-            \end{equation} 
-            We are usign the logarithm of the distance to the critical temperature, since we know that the heat capacity diverges at the critical temperature. The parameter $w$ is a small number that prevents the logarithm from diverging. The parameters $A$ and $B$ are used to scale and shift the function to fit the data.
+                C \approx B - A\ln(\sqrt{(T - T_c)^2 + \omega^2}). \label{fit_C}
+            \end{equation}
             This is implemented in the code as a function that takes the parameters $A, B, T_c, w$ and the temperature $T_r$ and returns the value of the heat capacity at that temperature. We then use the scipy package to fit this function to the data we have collected. The parameters $A, B, T_c, w$ are then optimized to minimize the difference between the function and the data. The parameter $T_c$ is then the critical temperature we are looking for. The peak of this function then gives us the critical temperature, which we can then compare to the theoretical value given in Eq. (\ref{critical_temperature}).
         \subsection{Determining parameters for final simulation}
             For the simulation that produced Figure \ref{fig:results} we had a number of requirements. The first requirements was for the simulation that produces the figure we use in this article to take no longer than 20 minutes to run. This meant that we had to look for simulation parameters that produce good data but for the simulation runtime to stay within the time bound.\\
@@ -232,7 +235,7 @@ Utrecht University}
     \todo{Give results}\\
     \todo{Give figures of results}
     
-\section{Comparison to theory}
+\section{Discussion}
     Using our simulation we obtained a value for the critical temperature as $T_r = <TODO>$ using the fit over the values of average magnetisation and a value of $T_r = <TODO>$ using the values of heat capacity. The theoretical value is given in Eq. (\ref{critical_temperature}). We can see that...
     \todo{Compare our results with theoreticla values}
 
