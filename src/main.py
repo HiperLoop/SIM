@@ -287,9 +287,9 @@ def meta_meta_simulation(value_count: int, batch_count: int,  core_limit: int | 
         
         fig, axs = plt.subplots(2, figsize=(6.4, 8))
         axs[0].errorbar(temps, m_data, yerr=m_std, fmt='-', capsize=3)
-        axs[0].axvline(temps[critical_temp_from_C], fmt='--', color='r')
+        axs[0].axvline(temps[critical_temp_from_C], linestyle='--', color='r')
         axs[1].errorbar(temps, C_data, yerr=C_std, fmt='-', capsize=3)
-        axs[1].axvline(temps[critical_temp_from_C], fmt='--', color='r')
+        axs[1].axvline(temps[critical_temp_from_C], linestyle='--', color='r')
         axs[0].set_title("Absolute magnetisation over reduced temperature")
         axs[1].set_title("Heat capacity over reduced temperature")
         axs[0].set_xlabel("Reduced temperature")
