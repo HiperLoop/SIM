@@ -1,14 +1,14 @@
 \begin{thebibliography}{1}
 
-\bibitem{Blundell2010}
-Stephen~J. Blundell and Katherine~M. Blundell.
-\newblock {\em Concepts in Thermal Physics}.
-\newblock Oxford University Press, Oxford, 2nd edition, 2010.
-
 \bibitem{Onsager1944}
 Lars Onsager.
 \newblock Crystal statistics. i. a two-dimensional model with an order-disorder transition.
 \newblock {\em Physical Review}, 65(3--4):117--149, 1944.
+
+\bibitem{Blundell2010}
+Stephen~J. Blundell and Katherine~M. Blundell.
+\newblock {\em Concepts in Thermal Physics}.
+\newblock Oxford University Press, Oxford, 2nd edition, 2010.
 
 \bibitem{Yang1952}
 C.~N. Yang.

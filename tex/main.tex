@@ -108,7 +108,7 @@
 \begin{document}
 
 %% Title and authors using built-in LaTeX options. Change according to own preferences
-\title{Determining critical phase transition temperature in an Ising model simulation}
+\title{Is it possible to determine the critical phase transition temperature in a 2D infinite Ising model using a finite-size approximation simualtion?}
         
 \author{Bela F. Brunner}
 %Lines break automatically or can be forced with \\
@@ -122,7 +122,7 @@ Utrecht University}
 \date{\today}
 
 \begin{abstract}
-    \todo{Abstract}
+    In this article, we attempted to determine the critical temperature for phase transitions in the infinite 2D Ising model. We used a Monte Carlo approach with the Metropolis algorithm. We then use the value of heat capacity of the model to determine the value of the critical temperature as at the critical temperature, the heat capacity function exhibits a singularity where it goes to infinity\cite{Onsager1944}. We first determined upper and lower bound for the critical temperature using small simulations where we look at the heat capacity and determined whether the chosen value of temperature corresponds to a heat capacity above or below than the critical temperature. We then ran a comprehensive multi-simulation over the predetermined temperature interval to find the critical temperature value. We obtained a value of $<value>$, with the theoretical value given by $T_c = \frac{2}{\ln(1 + \sqrt{2})} \approx 2.269$. We encountered a limitation of the finite-size approximation of the infinite lattice, which should be adressed in further research.
 \end{abstract}
 
 \maketitle
@@ -148,7 +148,7 @@ Utrecht University}
     \end{equation}
     The energy difference between the current spin at some position and the energy after the spin has been flipped is given by
     \begin{equation}
-            \Delta E = E_{\text{before}} - E_{\text{after}} = \sum_{\braket{j}}(-s_i)s_j - \sum_{\braket{j}}s_is_j = -2\sum_{\braket{j}}s_is_j. \label{spin_flip_energy_delta}
+        \Delta E = E_{\text{before}} - E_{\text{after}} = \sum_{\braket{j}}(-s_i)s_j - \sum_{\braket{j}}s_is_j = -2\sum_{\braket{j}}s_is_j. \label{spin_flip_energy_delta}
     \end{equation}
     The total amount of energy of the whole spin lattice is given by the sum over all pairwise interaction energies. This is then denoted as
     \begin{equation}
