@@ -1,3 +1,6 @@
+# Bela F. Brunner, Adam Zich
+# Time to run script: 20.49 minutes
+
 import csv
 import datetime
 import os
